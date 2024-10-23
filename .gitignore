@@ -1,0 +1,42 @@
+#escencial para que no se suban los archivos de configuracion
+# Entornos virtuales
+venv/
+.env/
+
+# Archivos de bases de datos
+database.sqlite
+*.sqlite3
+
+# Cachés de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración de IDEs
+#.vscode/
+.idea/
+
+# Archivos de logs
+*.log
+
+# Archivos de configuración de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de cobertura de pruebas
+.coverage
+coverage.xml
+htmlcov/
+
+# Archivos de distribución
+dist/
+build/
+*.egg-info/
+
+# Archivos de configuración de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración de FastAPI
+*.env
