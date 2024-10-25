@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from app.LogicEntities.Context import Context
+from app.LogicEntities.GameSessions import GameSessionLogicContext
+from app.websockets.ws_manager import ConnectionManager
+from websockets.ws_router import ws_router
+from pathlib import Path
 
+DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
 
 app = FastAPI()
 app.title = "Challenge Doctums API"
@@ -15,7 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#app.include_router()
+#Websockets manager
+manager = ConnectionManager()
 
 
 #Middleware de conexiones y sesiones: Para cuando implementemos los websockets
@@ -33,6 +40,16 @@ app.add_middleware(
 #         response.set_cookie("fast_vote_session", session_id,path="/", httponly=True)
 #     return response
 
+#Initializing the memory session game
+gameSessions = GameSessionLogicContext()
+
+#Initialing the context for the game logic
+context = Context(DATA_DIR)
+
+#app.include_router()
+app.include_router(ws_router)
+
 @app.get('/', tags = ['home'])
 def message ():
     return HTMLResponse('<h2>Hello world</h2>')
+
