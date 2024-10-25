@@ -1,19 +1,10 @@
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from sqlmodel import Session
 from app.LogicEntities.Player import Player
-from app.models.GameSessionModel import GameSessionCreate
-from app.LogicEntities.GameSession import GameSessionLogic
-from app.main import manager
-from app.models.PlayerModel import PlayerModel, PlayerCreate
-from app.models.GameSessionModel import GameSessionModel
 from app.services.PlayerService import PlayerService
 from app.services.GameSessionService import GameSessionService
-from app.utils.uuid import generate_uuid4, generate_uuid_from_text
-from app.main import context
+from app.main import manager, context
 
 ws_router = APIRouter(prefix="/ws")
-
 
 @ws_router.websocket("/game/{game_id}")
 async def websocket_endpoint(websocket: WebSocket, game_id: str):

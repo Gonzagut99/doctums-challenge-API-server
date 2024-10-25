@@ -1,15 +1,17 @@
-from fastapi import FastAPI
+from fastapi import  FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from app.LogicEntities.Context import Context
 from app.LogicEntities.GameSessions import GameSessionLogicContext
+from app.config.database import create_db_and_tables
 from app.websockets.ws_manager import ConnectionManager
-from websockets.ws_router import ws_router
 from pathlib import Path
+
 
 DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
 
 app = FastAPI()
+
 app.title = "Challenge Doctums API"
 app.version = "0.0.1"
 
@@ -46,10 +48,19 @@ gameSessions = GameSessionLogicContext()
 #Initialing the context for the game logic
 context = Context(DATA_DIR)
 
-#app.include_router()
+
+
+
+from app.routers.http_router import http_router
+from app.routers.ws_router import ws_router
+#app.include_ws_router()
 app.include_router(ws_router)
+app.include_router(http_router)
 
 @app.get('/', tags = ['home'])
 def message ():
     return HTMLResponse('<h2>Hello world</h2>')
 
+
+create_db_and_tables()
+print("Server started")
