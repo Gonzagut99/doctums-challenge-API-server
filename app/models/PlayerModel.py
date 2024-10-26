@@ -16,7 +16,7 @@ class PlayerModelBase(SQLModel):
     game_session_id: str = Field(default=None, foreign_key="gamesessionmodel.id") 
 
 class PlayerModel(PlayerModelBase, table=True):
-    id: str = Field(default=generate_uuid4(), primary_key=True)
+    id: str = Field(default_factory=generate_uuid4, primary_key=True)
     game_session:  Optional["GameSessionModel"]  = Relationship(back_populates="players") # type: ignore 
 
 class PlayerCreate(PlayerModelBase):
