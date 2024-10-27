@@ -1,7 +1,9 @@
 from copy import deepcopy
 import numpy as np
 import random
-from typing import Tuple
+from typing import List, Tuple
+
+from app.LogicEntities.Modifiers import Project, Resource
 
 class Player:
     def __init__(self, context=None, id=None, name=None, initial_budget=1000):
@@ -17,7 +19,6 @@ class Player:
         self.salaries_to_pay = 0
         self.actual_date = 0  # day stacked (360)
         self._get_legacy()
-        self.first_turn_in_month = True
 
     @property
     def month(self):
@@ -28,20 +29,19 @@ class Player:
         return [key for key, value in self.projects.items() if not value.is_finished(self.month)]
     
     @property
-    def finished_projects(self): 
-        return [key for key, value in self.projects.items() if value.is_finished(self.month)]
+    def finished_projects(self) -> List[Project]: 
+        return [value for key, value in self.projects.items() if value.is_finished(self.month)]
+    
+    @property
+    def finished_resources(self) -> List[Resource]: 
+        return [value for key, value in self.resources.items() if value.is_finished(self.month)]
 
     def _get_legacy(self):
         legacy_list = self.context.LEGACY
         legacy_choice = random.choice(legacy_list)
-        print('*********************************Productos Inciales - No se lanzo dado***************')
         for item in legacy_choice:
             self._add_legacy_product(item)
-
-            print(f"You have inherited: {self.context.PRODUCTS.get(item).name}")
-        print(f"Lista de Productos adquiridos: {self.products.keys()}")
-        self.display_efficiencies()
-        print('***********************************START GAME*************************************')
+        # self.display_efficiencies()
     
     def _add_legacy_product(self, product_id):
         product = self.context.PRODUCTS.get(product_id, None)
@@ -191,6 +191,7 @@ class Player:
 
         hired_resource = deepcopy(resource)
         hired_resource.purchased_on = self.month
+        hired_resource.start_datum = self.month + 1
         self.resources[resource_id] = hired_resource
         self.salaries_to_pay += hired_resource.monthly_salary
         self.budget -= resource.cost
@@ -198,27 +199,20 @@ class Player:
 
     def pay_salaries(self):
         self.budget -= self.salaries_to_pay
-        # TODO: charge salaries after hiring (not in the first month)
+        
+    def get_products_from_modifiers(self):
+        self.get_products_from_projects()
+        self.get_products_from_resources()
 
     def get_products_from_projects(self):
-        for project_id, project in self.projects.items():
-            time_passed = self.month - project.start_datum
-            if time_passed == project.project_length:
-                delivered_products_ids = project.delivered_products
-                for product_id in delivered_products_ids:
-                    self._add_product(product_id)  # add products and its efficiencies
-
-                # for efficiency in self.efficiencies.values():
-                #     efficiency.update_by_project(project)  # add points to efficiency corresponding to the project
-
-    def get_products_from_resources(self):
-        last_month = self.month - 1
-        purchased_resources_last_month = [
-            resource for resource in self.resources.values() if resource.purchased_on == last_month
-        ]
-        print(f"Has recibido los siguientes productos del recurso {purchased_resources_last_month[0]}: {purchased_resources_last_month[0].developed_products} ")
         
-        for resource in purchased_resources_last_month:
+        for project in self.finished_projects:
+            delivered_products_ids = project.delivered_products
+            for product_id in delivered_products_ids:
+                self._add_product(product_id)
+
+    def get_products_from_resources(self):        
+        for resource in self.finished_resources:
             for product_id in resource.developed_products:
                 self._add_product(product_id)
 
