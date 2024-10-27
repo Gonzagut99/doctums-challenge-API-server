@@ -18,7 +18,7 @@ class TestPlayerGame(unittest.TestCase):
 
     def test_month_start_increments(self):
         """Test that the month increments correctly when start_new_month is called."""
-        self.player_game.launch_new_month_actions()
+        self.player_game.time_manager.advance_day(31)
         self.assertGreater(self.player_game.time_manager.current_month, self.player_game.time_manager.old_month)
         
     def test_player_pay_salaries(self):
@@ -33,15 +33,12 @@ class TestPlayerGame(unittest.TestCase):
         
     def test_player_get_products_from_modifiers(self):
         """Test that the player gets products from modifiers when start_new_month is called."""
-        # Mock the get_products_from_modifiers method
-        resource_one_products_to_develop = len(context.RESOURCES.get("1").developed_products)
-        project_one_products_to_develop = len(context.PROJECTS.get("1").delivered_products)
         self.player_game.player.hire_resource("1", self.player_game.time_manager.current_month, self.player_game.time_manager.current_month)
         self.player_game.player.buy_project("1", self.player_game.time_manager.current_month, self.player_game.time_manager.current_month + 1)
         self.player_game.time_manager.advance_day(151)
         
         self.player_game.launch_new_month_actions()
-        self.assertGreaterEqual(len(self.player_game.player.products), resource_one_products_to_develop + project_one_products_to_develop ) #TODO: CHECK SPECIFIC NUMBER
+        self.assertEqual(len(self.player_game.player.products),19  )
 
 if __name__ == '__main__':
     unittest.main()
