@@ -21,8 +21,8 @@ class Product(Modifier):
 class Project(Modifier):
     points_to_grant: int = 5
     delivered_products: List = None
-    start_datum: Any = None
     able_to_grant_points: bool = True
+    start_datum: Any = None
     project_length: int = 3  # standard is 3 months
 
     def is_finished(self, actual_month):
@@ -37,4 +37,11 @@ class Resource(Modifier):
     developed_products: List = None
     able_to_grant_points: bool = True
     monthly_salary: int = 0
+    start_datum: Any = None
+    resource_lenght: int = 1
+    
+    def is_finished(self, actual_month):
+        if actual_month - self.resource_lenght > self.start_datum and actual_month >= self.start_datum:
+            return True
+        return False
     

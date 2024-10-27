@@ -49,4 +49,4 @@ class TurnManager:
         return self.playersgames[self.current_turn % len(self.playersgames)]
 
     def get_current_player_id(self):
-        return self.current_turn % len(self.playersgames)
+        return self.current_turn % len(self.playersgames)     
