@@ -1,19 +1,24 @@
+from typing import Sequence
 from sqlmodel import Session, select
 from app.LogicEntities.GameSession import GameSessionLogic
 from app.config.database import engine
-from app.models.GameSessionModel import GameSessionModel, GameSessionCreate
+from app.models.GameSession import GameSessionModel, GameSessionCreate
 from app.main import gameSessions
 
 class GameSessionService:
     def __init__(self):
         self.db = engine
         
-    def get_game_session(self, game_id: str) -> GameSessionModel:
+    #HTTP methods
+        
+    def get_game_session(self, game_id: str) -> GameSessionModel | None:
         with Session(self.db) as session:
             game = session.get(GameSessionModel, game_id)
+            if not game:
+                return None
             return game
 
-    def get_game_sessions(self) -> list[GameSessionModel]:
+    def get_game_sessions(self) -> Sequence[GameSessionModel]:
         with Session(self.db) as session:
             games = session.exec(select(GameSessionModel)).all()
             return games
@@ -25,6 +30,18 @@ class GameSessionService:
             session.commit()
             session.refresh(db_game) 
             return db_game
+        
+    def delete_game_session(self, game_id: str) -> GameSessionModel | None:
+        with Session(self.db) as session:
+            game = session.get(GameSessionModel, game_id)
+            if not game:
+                return None
+            session.delete(game)
+            session.commit()
+            return game
+        
+    
+    #Logic/Memory methods
     
     def generate_new_game_session_logic(self, game_id:str) -> bool:
         game = self.get_game_session(game_id)
@@ -41,13 +58,6 @@ class GameSessionService:
             if game.game.id == game_id:
                 return game
         return None
-    
-    def delete_game_session(self, game_id: str) -> bool:
-        with Session(self.db) as session:
-            game = session.get(GameSessionModel, game_id)
-            session.delete(game)
-            session.commit()
-            return 
     
     def delete_game_session_logic(self, game_id:str) -> bool:
         for game in gameSessions:
