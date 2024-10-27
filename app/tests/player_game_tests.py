@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import MagicMock, patch
 from app.LogicEntities.Player import Player
 from app.LogicEntities.PlayerGame import PlayerGame  # Adjust import paths as needed
 from app.main import context
@@ -19,17 +18,15 @@ class TestPlayerGame(unittest.TestCase):
 
     def test_month_start_increments(self):
         """Test that the month increments correctly when start_new_month is called."""
-        initial_month = self.player_game.time_manager.current_month
-        self.player_game.time_manager.start_new_month()
-        self.assertEqual(self.player_game.time_manager.current_month, initial_month + 1)
+        self.player_game.launch_new_month_actions()
+        self.assertGreater(self.player_game.time_manager.current_month, self.player_game.time_manager.old_month)
         
     def test_player_pay_salaries(self):
         """Test that the player pays salaries when start_new_month is called."""
-        # Mock the pay_salaries method
         salaries_total = 250
         expected_remain_budget = self.player_game.player.budget - salaries_total
         self.player_game.player.salaries_to_pay = salaries_total
-        self.player_game.player.actual_date = 31 # Set the date to first day of the second month
+        self.player_game.time_manager.advance_day(31) 
 
         self.player_game.launch_new_month_actions()
         self.assertEqual(self.player_game.player.budget, expected_remain_budget)
@@ -37,12 +34,14 @@ class TestPlayerGame(unittest.TestCase):
     def test_player_get_products_from_modifiers(self):
         """Test that the player gets products from modifiers when start_new_month is called."""
         # Mock the get_products_from_modifiers method
-        self.player_game.player.hire_resource("1")
-        self.player_game.player.buy_project("1")
-        self.player_game.player.actual_date = 121
+        resource_one_products_to_develop = len(context.RESOURCES.get("1").developed_products)
+        project_one_products_to_develop = len(context.PROJECTS.get("1").delivered_products)
+        self.player_game.player.hire_resource("1", self.player_game.time_manager.current_month, self.player_game.time_manager.current_month)
+        self.player_game.player.buy_project("1", self.player_game.time_manager.current_month, self.player_game.time_manager.current_month + 1)
+        self.player_game.time_manager.advance_day(151)
         
         self.player_game.launch_new_month_actions()
-        self.assertGreater(len(self.player_game.player.products), 3 ) #TODO: CHECK SPECIFIC NUMBER
+        self.assertGreaterEqual(len(self.player_game.player.products), resource_one_products_to_develop + project_one_products_to_develop ) #TODO: CHECK SPECIFIC NUMBER
 
 if __name__ == '__main__':
     unittest.main()

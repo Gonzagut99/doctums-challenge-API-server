@@ -3,10 +3,10 @@ import numpy as np
 import random
 from typing import List, Tuple
 
-from app.LogicEntities.Modifiers import Project, Resource
+from app.LogicEntities.Modifiers import Modifier, Project, Resource
 
 class Player:
-    def __init__(self, context=None, id=None, name=None, initial_budget=1000):
+    def __init__(self, context=None, id=None, name=None, initial_budget=100000):
         self.id:str|None = id
         self.name:str|None = name
         self.context = context
@@ -17,24 +17,7 @@ class Player:
         self.budget = initial_budget
         self.score = 0
         self.salaries_to_pay = 0
-        self.actual_date = 0  # day stacked (360)
-        self._get_legacy()
-
-    @property
-    def month(self):
-        return (self.actual_date // 30) + 1
-
-    @property
-    def running_projects(self): 
-        return [key for key, value in self.projects.items() if not value.is_finished(self.month)]
-    
-    @property
-    def finished_projects(self) -> List[Project]: 
-        return [value for key, value in self.projects.items() if value.is_finished(self.month)]
-    
-    @property
-    def finished_resources(self) -> List[Resource]: 
-        return [value for key, value in self.resources.items() if value.is_finished(self.month)]
+        #self._get_legacy()
 
     def _get_legacy(self):
         legacy_list = self.context.LEGACY
@@ -64,14 +47,14 @@ class Player:
 
         return True
 
-    def _add_product(self, product_id):
+    def _add_product(self, product_id, actual_month):
         product = self.context.PRODUCTS.get(product_id, None)
         name = product.name
         if product_id in self.products.keys():
             print(f"Product {name} is already available")
             return
         purchased_product = deepcopy(product)
-        purchased_product.purchased_on = self.month
+        purchased_product.purchased_on = actual_month
         
         is_meeting_requirements, number_of_requirements_needed = self.is_product_meeting_requirements(product)
         self.products[product_id] = purchased_product
@@ -82,7 +65,7 @@ class Player:
         else:
             self.enable_product_thriving(product)
         self.update_products_thriving_state()
-        print(f"El producto '{name}' ha sido añadido a tu lista de productos adquiridos")
+        # print(f"El producto '{name}' ha sido añadido a tu lista de productos adquiridos")
         
         # This is no longer necessary since the points system has been changed
         # for efficiency in self.efficiencies.values():
@@ -143,26 +126,28 @@ class Player:
             pass
         return len(purchased_modifiers)
 
-    def buy_product(self, product_id):
+    def buy_product(self, product_id, actual_month):
         if self.check_month_number_of_purchases("product") >= 5:
             print("You have already purchased 5 products this month, you are not allowed to buy more")
             return
         product = self.context.PRODUCTS.get(product_id, None)
         
         if self.budget_enough_for_buying(product):
-            self._add_product(product_id)
+            self._add_product(product_id, actual_month)
             # Todo: print some message if the requirements for the product are not bought
             self.budget -= product.cost
         print(f"Presupuesto restante: {self.budget}")
 
-    def buy_project(self, project_id):
+    def buy_project(self, project_id, actual_month, month_to_start):
         
         if self.check_month_number_of_purchases("project") >= 1:
             print("You have already bought 1 project this month, you are not allowed to buy more")
             return
-        if len(self.running_projects) >= 3:
-            print("You are note allowed to run more than 3 projects in parallel")
-            return
+        
+        #This validation must be perform by TimeManager
+        # if len(self.running_projects) >= 3:
+        #     print("You are note allowed to run more than 3 projects in parallel")
+        #     return
         project = self.context.PROJECTS.get(project_id, None)
         name = project.name
         if project_id in self.projects.keys():
@@ -170,14 +155,14 @@ class Player:
             return
         if self.budget_enough_for_buying(project):
             bought_project = deepcopy(project)
-            bought_project.purchased_on = self.month
-            bought_project.start_datum = self.month + 1
+            bought_project.purchased_on = actual_month
+            bought_project.start_datum = month_to_start
             # Todo: check datum --> do you still have time to get the products
             self.projects[project_id] = bought_project
             self.budget -= project.cost
         print(f"Presupuesto restante: {self.budget}")
 
-    def hire_resource(self, resource_id):
+    def hire_resource(self, resource_id, actual_month, month_to_start):
         if self.check_month_number_of_purchases("resource") >= 1:
             print("You have already hired 1 resource this month, you are not allowed to buy more")
             return
@@ -190,8 +175,8 @@ class Player:
             return
 
         hired_resource = deepcopy(resource)
-        hired_resource.purchased_on = self.month
-        hired_resource.start_datum = self.month + 1
+        hired_resource.purchased_on = actual_month
+        hired_resource.start_datum = month_to_start
         self.resources[resource_id] = hired_resource
         self.salaries_to_pay += hired_resource.monthly_salary
         self.budget -= resource.cost
@@ -199,22 +184,16 @@ class Player:
 
     def pay_salaries(self):
         self.budget -= self.salaries_to_pay
-        
-    def get_products_from_modifiers(self):
-        self.get_products_from_projects()
-        self.get_products_from_resources()
 
-    def get_products_from_projects(self):
-        
-        for project in self.finished_projects:
-            delivered_products_ids = project.delivered_products
-            for product_id in delivered_products_ids:
-                self._add_product(product_id)
+    def get_products_from_projects(self, finished_projects: List[Project], actual_month: int):
+        for project in finished_projects:
+            for product_id in project.delivered_products:
+                self._add_product(product_id, actual_month)
 
-    def get_products_from_resources(self):        
-        for resource in self.finished_resources:
+    def get_products_from_resources(self, finished_resources: List[Resource], actual_month: int):        
+        for resource in finished_resources:
             for product_id in resource.developed_products:
-                self._add_product(product_id)
+                self._add_product(product_id, actual_month)
 
             # for efficiency in self.efficiencies.values():
             #     efficiency.update_by_resource(resource)
