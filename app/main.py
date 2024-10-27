@@ -18,7 +18,18 @@ from pathlib import Path
 
 DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting lifespan...")
+    try:
+        create_db_and_tables()
+        print("DB and tables created successfully.")
+    except Exception as e:
+        print(f"Error during DB setup: {str(e)}")
+    yield
+    print("Shutting down app...")
+
+app = FastAPI(lifespan=lifespan)
 
 app.title = "Challenge Doctums API"
 app.version = "0.0.1"
@@ -30,17 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Starting lifespan...")
-    try:
-        create_db_and_tables()
-        print("DB and tables created successfully.")
-    except Exception as e:
-        print(f"Error during DB setup: {str(e)}")
-    yield
-    print("Shutting down app...")
 
 #Websockets manager
 manager = ConnectionManager()
