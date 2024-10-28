@@ -23,18 +23,26 @@ class PlayerGame():
         self.player:Player = player
         self.event_manager:EventManager = EventManager()
         self.time_manager:TimeManager = TimeManager(self.player)
-        self.player_states = ["broke", "playing", "finished"]
-        self.player_state:str|None = 'playing'
+        self.player_state:str|None = 'playing' #"broke", "playing", "finished"
+        self.turn_state:str|None = 'playing' #end
         
     def start_game_journey(self):
         # random.seed(0)
         # np.random.seed(0)
+        self.begin_turn()
         self.launch_new_journey_actions()
-        while not self.is_journey_finished():
+        while not self.is_journey_finished() and self.player_state == "playing":
             self.turn_play()
     
+    def begin_turn(self):     
+        self.turn_state = "playing"
+    
+    def end_turn(self):
+        self.turn_state = "end"
+    
     def turn_play(self):
-        self.proceed_journey() 
+        self.proceed_journey()
+        self.end_turn() 
     
     def launch_new_month_actions(self):
         if self.time_manager.is_new_month():
