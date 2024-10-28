@@ -3,8 +3,9 @@ from app.LogicEntities.GameSession import GameSessionLogic
 from app.LogicEntities.PlayerGame import PlayerGame
 
 class GameLogic(GameSessionLogic):
-    def __init__(self):
-        super()
+    def __init__(self, context, session_id):
+        super().__init__(session_id) 
+        self.context = context
         self.playersgames: list[PlayerGame] = []
         
     def load_players_games(self):

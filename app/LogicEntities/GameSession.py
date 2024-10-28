@@ -1,9 +1,8 @@
-
 from app.LogicEntities.Player import Player
 
 class GameSessionLogic:
-    def __init__(self):
-        # self.game = Game(context)
+    def __init__(self, session_id: str):
+        self.session_id:str = session_id
         self.connected_players:list[Player] = []
         self.first_player:Player|None = None
         self.current_player:Player|None = None

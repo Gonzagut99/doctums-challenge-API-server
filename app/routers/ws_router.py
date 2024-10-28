@@ -16,29 +16,36 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     if not game:
         await websocket.close()     
     
-    player_id = await websocket.receive_text()
-    print(f"Player id: {player_id}")
-        
-    if not player_id:
-        await websocket.close()
-    
     await manager.add_connection(websocket) #Internamente ya hace el accept
-        
-    #El jugador ya se creo por aparte
-    db_player = PlayerService().get_player(player_id)
-    player = Player(context=context, name=db_player.name, id=db_player.id)
-        
-    #
-    game_session_logic = GameSessionService().get_session_logic(game_id)
-    game_session_logic.add_player(player)
-        
+    
     try:
         while True:
-            data = await websocket.receive_text()
-            await websocket.send_text(f"Nuevo jugador conectado: {data}")
+            player_id = await websocket.receive_text()
+            print(f"Player id: {player_id}")
+                
+            if not player_id:
+                await websocket.close()
+                
+            #El jugador ya se creo por aparte
+            db_player = PlayerService().get_player(player_id)
+            player = Player(context=context, name=db_player.name, id=db_player.id)
+                
+            game_session_logic = GameSessionService().get_session_logic(game_id)
+            
+            if not game_session_logic:
+                new_game_session_logic_created = GameSessionService().generate_new_game_session_logic(game_id, game_context=context)
+                if not new_game_session_logic_created:
+                    raise Exception("Failed to create new game session logic")
+                new_game_session_logic = GameSessionService().get_session_logic(game_id)
+                new_game_session_logic.add_player(player)
+            else:
+                game_session_logic.add_player(player)
+                
+            await manager.broadcast(f"Jugador {player.name} conectado")
+   
     except WebSocketDisconnect:
         manager.remove_connection(websocket)
-        await manager.broadcast(f"Jugador {data} desconectado")
+        await manager.broadcast(f"Jugador {player.name} desconectado")
     
     
         
