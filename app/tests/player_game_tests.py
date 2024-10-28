@@ -39,6 +39,15 @@ class TestPlayerGame(unittest.TestCase):
         
         self.player_game.launch_new_month_actions()
         self.assertEqual(len(self.player_game.player.products),19  )
+    
+    def test_player_update_products_thriving_state(self):
+        """Test that the player updates products thriving state when start_new_month is called."""
+        self.player_game.player.buy_product("14", self.player_game.time_manager.current_month) # Here we are buying a product that requires products 10 and 13 to be thriving
+        self.player_game.player.buy_project("3", self.player_game.time_manager.current_month, self.player_game.time_manager.current_month + 1) # This project will deliver products 10 and 13
+        self.player_game.time_manager.advance_day(151) # Advance 5 months to finish the project
+        
+        self.player_game.launch_new_month_actions()
+        self.assertEqual(self.player_game.player.products["14"].able_to_grant_points, True)
 
 if __name__ == '__main__':
     unittest.main()
