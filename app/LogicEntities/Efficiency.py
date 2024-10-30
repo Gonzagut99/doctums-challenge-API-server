@@ -158,4 +158,4 @@ class Efficiency:
             self.points += granted_points
         else:
             self.points = self.max_points
-        print(f"La eficiencia '{self.ID}' tiene ahora {self.points} puntos")   
+        # print(f"La eficiencia '{self.ID}' tiene ahora {self.points} puntos")   

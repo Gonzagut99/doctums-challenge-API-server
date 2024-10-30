@@ -37,6 +37,5 @@ class GameSessionLogic:
     
     def remove_player(self, player: Player):
         self.connected_players.remove(player)
-    
 
-        
+   

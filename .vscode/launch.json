@@ -14,6 +14,16 @@
       "jinja":true,
       "justMyCode": true
     },
+    {
+      "name": "Debug PlayerGame Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": [
+          "app/tests/player_game_tests.py"  // Path to your test file
+      ],
+      "justMyCode": true
+    }
  
   ]
 }
