@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from typing import List, Tuple, Any
 import numpy as np
 
+from app.LogicEntities.Modifiers import Product, Project, Resource
+
 @dataclass
 class Efficiency:
     name: str
-    modifiable_by_products: List 
-    modifiable_by_projects: List
-    modifiable_by_resources: List
+    modifiable_by_products: list[str]
+    modifiable_by_projects: list[str]
+    modifiable_by_resources: list[str]
     points: int = None
     ID: int = None
     max_points: int = 36
@@ -100,7 +102,7 @@ class Efficiency:
         
 
 # Add points because oh faving products when certain events happen
-    def update_by_product(self, product, function_type: str):
+    def update_by_product(self, product:Product, function_type: str):
         def legacy_function():
             if product.ID in self.modifiable_by_products:
                 #At the beginning the legacy products inherit the point multplied by 5
@@ -132,7 +134,7 @@ class Efficiency:
         return functions.get(function_type)
       
     # If we have the projects in the bag, add points to efficiency 
-    def update_by_project(self, project, event_level):
+    def update_by_project(self, project:Project, event_level):
         if not self.number_of_projects_modifiers:
             return
         if project.ID in self.modifiable_by_projects:
@@ -140,7 +142,7 @@ class Efficiency:
             self._add_points(granted_points)
 
     # If we have the resources in the bag, add points to efficiency 
-    def update_by_resource(self, resource, event_level):
+    def update_by_resource(self, resource:Resource, event_level):
         if not self.number_of_resources_modifiers:
             return
         if resource.ID in self.modifiable_by_resources:
@@ -148,7 +150,7 @@ class Efficiency:
             self._add_points(granted_points)
     
     # Prueba de riesgo        
-    def challenge_efficiency(self, risk_points, modifiers_points):
+    def challenge_efficiency(self, risk_points:int, modifiers_points:int):
         if self.points+modifiers_points >= risk_points:
             return True
         return False

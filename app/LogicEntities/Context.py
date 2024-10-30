@@ -8,17 +8,17 @@ from app.utils.data_loader import load_products, load_projects, load_resources, 
 class Context:
     def __init__(self, data_dir):
         self.data_dir = data_dir
-        self.PRODUCTS = None
-        self.PROJECTS = None
-        self. RESOURCES = None
-        self. EFFICIENCIES = None
-        self.EVENTS = None
-        self. LEGACY = None
+        self.PRODUCTS:dict | None = None
+        self.PROJECTS:dict | None = None
+        self. RESOURCES:dict | None = None
+        self. EFFICIENCIES:dict | None = None
+        self.EVENTS:dict | None = None
+        self. LEGACY:dict | None = None
         self.load_data()
-        self.board = self.load_bord()
+        self.board = self.load_board()
 
 
-    def load_data(self):
+    def load_data(self) -> None:
         data_dir = self.data_dir
         products_path = data_dir.joinpath("products.csv")
         projects_path = data_dir.joinpath("projects.csv")
@@ -34,6 +34,7 @@ class Context:
         self.EVENTS = load_events(events_path)
         self.LEGACY = load_legacy(legacy_path)
         
+        # loading events' modifiers related to themselves
         # add modifiers to its respective events according to the required efficiencies
         for event in self.EVENTS.values():
             required_efficiencies = list(itemgetter(*event.required_efficiencies)(self.EFFICIENCIES))            
@@ -46,7 +47,7 @@ class Context:
             event.modifiable_projects = list(itertools.chain(*modifiable_projects))
             event.modifiable_resources = list(itertools.chain(*modifiable_resources))
 
-    def load_bord(self):
+    def load_board(self):
         board_path = self.data_dir.joinpath("board.csv")
         board = []
         with open(board_path) as f:

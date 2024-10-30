@@ -3,17 +3,19 @@ import numpy as np
 import random
 from typing import List, Tuple
 
-from app.LogicEntities.Modifiers import Modifier, Project, Resource
+from app.LogicEntities.Context import Context
+from app.LogicEntities.Efficiency import Efficiency
+from app.LogicEntities.Modifiers import Modifier, Product, Project, Resource
 
 class Player:
-    def __init__(self, context=None, id=None, name=None, initial_budget=100000):
+    def __init__(self, context:Context=None, id=None, name=None, initial_budget=100000):
         self.id:str|None = id
         self.name:str|None = name
-        self.context = context
-        self.efficiencies = deepcopy(self.context.EFFICIENCIES)  # standard efficiencies beginning with 0 points
-        self.products = dict()
-        self.projects = dict()
-        self.resources = dict()
+        self.context:Context|None = context
+        self.efficiencies:dict[str,Efficiency] = deepcopy(self.context.EFFICIENCIES)  # standard efficiencies beginning with 0 points
+        self.products:dict[str,Product] = dict()
+        self.projects:dict[str,Project] = dict()
+        self.resources:dict[str,Resource] = dict()
         self.budget = initial_budget
         self.score = 0
         self.salaries_to_pay = 0
@@ -199,7 +201,7 @@ class Player:
             #     efficiency.update_by_resource(resource)
         
 
-    def throw_dices(self, number):
+    def throw_dices(self, number:int) -> Tuple[np.ndarray, int]:
         dices = np.random.randint(1, 6, size=number)
         return dices, dices.sum()
 

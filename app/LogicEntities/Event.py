@@ -7,12 +7,12 @@ from app.LogicEntities.Efficiency import Efficiency
 class Event:
     description: str
     appear_first_in_trimester: int
-    required_efficiencies: List
+    required_efficiencies: list
     result_success: Tuple
     result_failure: Tuple
-    modifiable_products: List = None #[...eficiency1.modifiable_by_products, ...eficiency2.modifiable_by_products]
-    modifiable_projects: List = None
-    modifiable_resources: List = None
+    modifiable_products: list[str] = None #[...eficiency1.modifiable_by_products, ...eficiency2.modifiable_by_products]
+    modifiable_projects: list[str] = None
+    modifiable_resources: list[str] = None
     ID: int = None
     level: int = None
 

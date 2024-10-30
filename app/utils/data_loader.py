@@ -3,7 +3,7 @@ from app.LogicEntities.Efficiency import Efficiency
 from app.LogicEntities.Event import Event
 
 
-def load_efficiencies(path):
+def load_efficiencies(path) -> dict[str, Efficiency]:
     efficiencies_dict = dict()
     with open(path) as f:
         content = f.read().splitlines()
@@ -27,7 +27,7 @@ def load_efficiencies(path):
     return efficiencies_dict
 
 
-def load_products(path):
+def load_products(path) -> dict[str, Product]:
     products_dict = dict()
     with open(path) as f:
         content = f.read().splitlines()
@@ -43,7 +43,7 @@ def load_products(path):
     return products_dict
 
 
-def load_projects(path):
+def load_projects(path) -> dict[str, Project]:
     projects_dict = dict()
     with open(path) as f:
         content = f.read().splitlines()
@@ -60,7 +60,7 @@ def load_projects(path):
     return projects_dict
 
 
-def load_resources(path):
+def load_resources(path) -> dict[str, Resource]:
     resources_dict = dict()
     with open(path) as f:
         content = f.read().splitlines()
@@ -77,7 +77,7 @@ def load_resources(path):
     return resources_dict
 
 
-def load_events(path):
+def load_events(path) -> dict[str, Event]:
     events_dict = dict()
     with open(path) as f:
         content = f.read().splitlines()
@@ -99,7 +99,7 @@ def load_events(path):
     return events_dict
 
 
-def load_legacy(path):
+def load_legacy(path) -> list[list[str]]:
     legacy_list = []
     with open(path) as f:
         content = f.read().splitlines()
