@@ -42,10 +42,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#Websockets manager
-manager = ConnectionManager()
-
-
 #Middleware de conexiones y sesiones: Para cuando implementemos los websockets
 # @app.middleware("http")
 # async def db_session_middleware(request: Request, call_next):

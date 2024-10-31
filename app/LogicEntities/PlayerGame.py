@@ -339,8 +339,7 @@ class EventManager:
         data:dict[str,int] = {}
         for efficiency in required_efficiencies:
             data[efficiency.name] = efficiency.points
-        return print(f"Estos son los puntos de tus eficiencias que son retadas por el evento: 
-        {', '.join([f'{key}: {value}' for key, value in data.items()])}") 
+        return print(f"Estos son los puntos de tus eficiencias que son retadas por el evento: {', '.join([f'{key}: {value}' for key, value in data.items()])}") 
     
     def notify_chosen_efficiency_data(self):
         return print(f"La eficiencia escogida es {self.chosen_efficiency.name} porque es la que tiene mas puntos.")

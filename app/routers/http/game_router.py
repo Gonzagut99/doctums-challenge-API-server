@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Path, status, HTTPException
-from fastapi.exceptions import RequestValidationError,FastAPIError
 from app.models.GameSession import GameSessionCreate, GameSessionModel
 from app.routers.http.ResponseModel import ResponseModel
 from app.services.GameSessionService import GameSessionService
@@ -18,6 +17,7 @@ async def create_game_session()-> JSONResponse:
     players = new_game.players
     new_game = new_game.model_dump()
     new_game["players"] = players
+    
     return JSONResponse(
         content=ResponseModel(
             message="Game session created successfully",

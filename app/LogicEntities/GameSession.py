@@ -28,8 +28,8 @@ class GameSessionLogic:
     def get_first_player(self) -> Player:
         return self.first_player
     
-    def get_player(self, player_id: int) -> Player:
-        return self.connected_players[player_id]
+    def get_player(self, player_instance: Player) -> Player:
+        return self.connected_players[player_instance]
     
     #After all players have rolled the dice, the player with the highest score will be the first player to play   
     def order_players(self, high_dice_score_player: int):

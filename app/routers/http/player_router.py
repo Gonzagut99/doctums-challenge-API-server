@@ -1,5 +1,5 @@
 from typing import Sequence
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
 from fastapi.responses import JSONResponse
 from app.models.Player import PlayerModel, PlayerCreate, PlayerUpdate
 from app.routers.http.ResponseModel import ResponseModel
@@ -33,12 +33,14 @@ def get_players() -> JSONResponse:
 
 @player_http_router.post("/create", response_model=PlayerModel, tags=["players"], status_code=status.HTTP_201_CREATED)
 def add_player(
+    response:Response,
     player:PlayerCreate
 ) -> JSONResponse:
     new_player = service.add_player(player)
     game = new_player.game_session
     new_player = new_player.model_dump()
     new_player["games_session"] = game
+    response.set_cookie(key="player_id", value=new_player["id"])
     return JSONResponse(
         content=ResponseModel(
             message="Player created successfully",
