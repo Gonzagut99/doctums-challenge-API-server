@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 class PlayerModelBase(SQLModel):
     name: Optional[str] = Field(min_length=3, max_length=50, default=None)
+    avatar_id: Optional[int] =  Field(default=1)
     score: Optional[int]  = Field(default=0)
     remaining_budget: Optional[int]  = Field(default=0)
     created_at: Optional[datetime.datetime] = Field(default_factory=datetime.datetime.now)

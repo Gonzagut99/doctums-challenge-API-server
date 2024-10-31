@@ -59,6 +59,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             # Only fetch player from game session once per connection
             if player is None:
                 db_player = PlayerService().get_player(player_id)
+                #Validate if the player belongs to the game session
+                if db_player.game_session_id != game_id:
+                    await websocket.send_json({"status": "error", "message": "Player does not belong to the game session"})
+                    await websocket.close()
+                    return
                 player = Player(context=context, name=db_player.name, id=db_player.id)
                 game_session_logic.add_player(player)
             
@@ -67,6 +72,6 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             
     except WebSocketDisconnect:
         manager.remove_connection(websocket)
-        await manager.broadcast(f"Jugador {player.name} desconectado")
+        await manager.broadcast(f"Un Jugador se ha desconectado")
     
     
