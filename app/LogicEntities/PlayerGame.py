@@ -21,10 +21,11 @@ class PlayerGame():
         self.current_dice_result:int = 0
         self.context:Context = context
         self.player:Player = player
-        self.event_manager:EventManager = EventManager()
+        self.event_manager:EventManager = EventManager(self.player)
         self.time_manager:TimeManager = TimeManager(self.player)
         self.player_state:str|None = 'playing' #"broke", "playing", "finished"
         self.turn_state:str|None = 'playing' #end
+        
         
     def start_game_journey(self):
         # random.seed(0)
@@ -58,8 +59,9 @@ class PlayerGame():
     def launch_new_journey_actions(self):
         if self.time_manager.is_new_month():
             self.time_manager.start_new_month()
-            self.launch_buy_modifiers_actions()
+            #self.launch_buy_modifiers_actions()
             self.time_manager.first_turn_in_month = False
+            self.player.get_legacy()
     
     def sort_steps_to_advance(self):
         dices, steps = self.player.throw_dices(self.journey_dices_number)

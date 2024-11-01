@@ -14,7 +14,6 @@ class GameSessionModelBase(SQLModel):
 class GameSessionModel(GameSessionModelBase, table=True):
     __tablename__ = "gamesessions"
     id: str = Field(default_factory=generate_uuid4, primary_key=True)
-    
     players: list["PlayerModel"] = Relationship(back_populates="game_session", sa_relationship_kwargs={"cascade": "all, delete-orphan", "lazy": "selectin"})
     
     # __config__ = {

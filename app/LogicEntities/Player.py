@@ -8,7 +8,7 @@ from app.LogicEntities.Efficiency import Efficiency
 from app.LogicEntities.Modifiers import Modifier, Product, Project, Resource
 
 class Player:
-    def __init__(self, context:Context=None, id=None, name=None, initial_budget=100000):
+    def __init__(self, context:Context=None, id=None, name=None, avatar_id:int = 1 , initial_budget=100000):
         self.id:str|None = id
         self.name:str|None = name
         self.context:Context|None = context
@@ -19,14 +19,10 @@ class Player:
         self.budget = initial_budget
         self.score = 0
         self.salaries_to_pay = 0
-        #self._get_legacy()
+        self.is_host = False
+        self.avatar_id = avatar_id
 
-    def _get_legacy(self):
-        legacy_list = self.context.LEGACY
-        legacy_choice = random.choice(legacy_list)
-        for item in legacy_choice:
-            self._add_legacy_product(item)
-        # self.display_efficiencies()
+
     
     def _add_legacy_product(self, product_id):
         product = self.context.PRODUCTS.get(product_id, None)
@@ -71,7 +67,14 @@ class Player:
         
         # This is no longer necessary since the points system has been changed
         # for efficiency in self.efficiencies.values():
-        #     efficiency.update_by_product(product, self.products)
+        #     efficiency.update_by_product(product, self.products)]
+        
+    def get_legacy(self):
+        legacy_list = self.context.LEGACY
+        legacy_choice = random.choice(legacy_list)
+        for item in legacy_choice:
+            self._add_legacy_product(item)
+        # self.display_efficiencies()
     
     # When meeting the product requirements the product is able to grant points        
     def enable_product_thriving(self, product):

@@ -1,14 +1,10 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.LogicEntities.Player import Player
-from app.services.PlayerService import PlayerService
 from app.services.GameSessionService import GameSessionService
 from app.main import context
 from app.utils.dispatcher_handler import Dispatcher
-from app.websockets.ws_manager import ConnectionManager
 
 ws_router = APIRouter(prefix="/ws")
-manager = ConnectionManager()
-dispatcher = Dispatcher(manager=manager)
+
 
 @ws_router.websocket("/game/create/{game_id}")
 async def create_game_session(websocket: WebSocket, game_id: str):
@@ -45,33 +41,18 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         await websocket.send_json({"status": "error", "message": "Game session does not exist"})
         await websocket.close()
         return
-    
-    await manager.add_connection(websocket)
-    
-    # Initialize player variable outside the loop
-    player = None
 
+    await game_session_logic.manager.add_connection(websocket)
+    
+    dispatcher = Dispatcher(session=game_session_logic, context=context)
     try:
         while True:
             data = await websocket.receive_json()
-            player_id = data.get("player_id")
-
-            # Only fetch player from game session once per connection
-            if player is None:
-                db_player = PlayerService().get_player(player_id)
-                #Validate if the player belongs to the game session
-                if db_player.game_session_id != game_id:
-                    await websocket.send_json({"status": "error", "message": "Player does not belong to the game session"})
-                    await websocket.close()
-                    return
-                player = Player(context=context, name=db_player.name, id=db_player.id)
-                game_session_logic.add_player(player)
-            
-            # Use cached `player` in further processing or dispatch if needed
-            #await dispatcher.dispatch(game_id, websocket, data)
+            # Use cached `player` in further processing or disp3atch if needed
+            await dispatcher.dispatch(game_id, websocket, data)
             
     except WebSocketDisconnect:
-        manager.remove_connection(websocket)
-        await manager.broadcast(f"Un Jugador se ha desconectado")
+        game_session_logic.manager.remove_connection(websocket)
+        await game_session_logic.manager.broadcast(f"Un Jugador se ha desconectado")
     
     
