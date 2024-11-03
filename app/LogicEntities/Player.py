@@ -5,11 +5,12 @@ from typing import List, Tuple
 
 from app.LogicEntities.Context import Context
 from app.LogicEntities.Efficiency import Efficiency
-from app.LogicEntities.Modifiers import Modifier, Product, Project, Resource
+from app.LogicEntities.Modifiers import  Product, Project, Resource
 
 class Player:
-    def __init__(self, context:Context=None, id=None, name=None, avatar_id:int = 1 , initial_budget=100000):
+    def __init__(self, context:Context=None, id=None, name=None, avatar_id:int = 1 , initial_budget=100000, connection_port =None):
         self.id:str|None = id
+        self.connection_port:int|None = connection_port
         self.name:str|None = name
         self.context:Context|None = context
         self.efficiencies:dict[str,Efficiency] = deepcopy(self.context.EFFICIENCIES)  # standard efficiencies beginning with 0 points
@@ -24,14 +25,14 @@ class Player:
 
 
     
-    def _add_legacy_product(self, product_id):
+    def _add_legacy_product(self, product_id, actual_month:int):
         product = self.context.PRODUCTS.get(product_id, None)
         name = product.name
         if product_id in self.products.keys():
             print(f"Product {name} is already available")
             return
         purchased_product = deepcopy(product)
-        purchased_product.purchased_on = self.month
+        purchased_product.purchased_on = actual_month
         purchased_product.is_legacy = True
         self.products[product_id] = purchased_product
         for efficiency in self.efficiencies.values():
@@ -69,11 +70,11 @@ class Player:
         # for efficiency in self.efficiencies.values():
         #     efficiency.update_by_product(product, self.products)]
         
-    def get_legacy(self):
+    def get_legacy(self, actual_month:int):
         legacy_list = self.context.LEGACY
         legacy_choice = random.choice(legacy_list)
         for item in legacy_choice:
-            self._add_legacy_product(item)
+            self._add_legacy_product(item, actual_month)
         # self.display_efficiencies()
     
     # When meeting the product requirements the product is able to grant points        
@@ -112,20 +113,20 @@ class Player:
             else:
                 self.disable_product_thriving(product) and print(f"Este: '{product.name}' aún no te dara puntos porque te falta tener al menos {number_of_requirements_needed} de estos productos: {product.requirements}")
 
-    def check_month_number_of_purchases(self, modifier_type):
+    def check_month_number_of_purchases(self, modifier_type, month_to_check:int):
         purchased_modifiers = None
 
         if modifier_type == "product":
             purchased_modifiers = {
-                key: value for key, value in self.products.items() if value.purchased_on == self.month and not value.is_legacy
+                key: value for key, value in self.products.items() if value.purchased_on == month_to_check and not value.is_legacy
             }
         elif modifier_type == "project":
             purchased_modifiers = {
-                key: value for key, value in self.projects.items() if value.purchased_on == self.month
+                key: value for key, value in self.projects.items() if value.purchased_on == month_to_check
             }
         elif modifier_type == "resource":
             purchased_modifiers = {
-                key: value for key, value in self.resources.items() if value.purchased_on == self.month
+                key: value for key, value in self.resources.items() if value.purchased_on == month_to_check
             }
         else:
             pass

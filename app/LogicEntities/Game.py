@@ -10,6 +10,8 @@ class GameLogic(GameSessionLogic):
         
     def load_players_games(self):
         self.playersgames = [PlayerGame(player=player) for player in self.connected_players]
+        for playergame in self.playersgames:
+            playergame.load_player_data()
     
     def start_game(self, high_dice_score_player: int):
         self.order_players(high_dice_score_player)

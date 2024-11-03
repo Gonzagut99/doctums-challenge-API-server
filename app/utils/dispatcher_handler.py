@@ -43,7 +43,7 @@ class Dispatcher:
               await websocket.send_json({"status": "error", "message": "El jugador no pertenece a la sesión de juego"})
               await websocket.close()
               return
-          self.player = Player(context=self.context, name=db_player.name, id=db_player.id, avatar_id=db_player.avatar_id)
+          self.player = Player(context=self.context, name=db_player.name, id=db_player.id, avatar_id=db_player.avatar_id, connection_port=websocket.client.port)
           if len(self.session.get_players()) == 0:
               self.session.convert_to_host(self.player) # First player to join is the host
           self.session.add_player(self.player)    # Only fetch player from game session once per connection
@@ -62,6 +62,28 @@ class Dispatcher:
             }
         }
         await self.manager.broadcast(json.dumps(response))
+        
+    async def handle_start_game(self, game_id: str, websocket: WebSocket, message: dict):
+        if not self.player.is_host:
+          await self.manager.send_personal_json({"status": "error", "message": "Only the host can start the game"}, websocket)
+          return
+        self.session.load_players_games()
+        connected_players = self.session.get_players()
+        # Initialize game for all players
+        for player in connected_players:
+            response = {
+                "method": "start_game",
+                "status": "success",
+                "message": "The game has started!",
+                "player": {
+                    "id": player.id,
+                    "name": player.name,
+                    "avatarId": player.avatar_id
+                }
+                
+            }
+            await self.manager.send_message_by_port(response, player.connection_port)
+
 
     async def handle_submit_plan(self, game_id: str, websocket: WebSocket, message: dict):
         actions = message.get("actions")
@@ -87,15 +109,3 @@ class Dispatcher:
         }
         await self.manager.broadcast(game_id, response)
 
-    async def handle_start_game(self, game_id: str, websocket: WebSocket, message: dict):
-        if not self.player.is_host:
-          await self.manager.send_personal_json({"status": "error", "message": "Only the host can start the game"}, websocket)
-          return
-        self.session.load_players_games()
-        # Initialize game for all players
-        response = {
-            "method": "start_game",
-            "status": "success",
-            "message": "The game has started!"
-        }
-        await self.manager.broadcast_json(response)
