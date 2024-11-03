@@ -54,7 +54,8 @@ class Dispatcher:
             "status": "success",
             "message": f"Jugador {self.player.name} se ha unido!",
             "game": {
-                "state": "waiting_for_players",
+                #"state": "waiting_for_players",
+                "id": game_id,
                 "players": [
                     {"id": p.id, "name": p.name, "isHost": p.is_host, "avatarId" : p.avatar_id} for p in self.session.get_players()
                 ],
