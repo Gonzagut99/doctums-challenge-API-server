@@ -77,11 +77,12 @@ class Dispatcher:
                 "method": "start_game",
                 "status": "success",
                 "message": "The game has started!",
-                "legacy_products": f"{player.get_products()}" ,
+                "legacy_products": player.get_products(),
                 "player": {
                     "id": player.id,
                     "name": player.name,
-                    "avatarId": player.avatar_id
+                    "avatarId": player.avatar_id,
+                    "efficiencies": player.get_efficiencies(),
                 },
                 "turns_order": turn_order
                 

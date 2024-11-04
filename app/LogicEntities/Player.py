@@ -233,4 +233,8 @@ class Player:
         for efficiency in self.efficiencies.values():
             print(f"{efficiency.name}: {efficiency.points}")
 
+    def get_efficiencies(self):
+        #get only all efficiencies id and points
+        return {efficiency.ID: efficiency.points for efficiency in self.efficiencies.values()}
+
 
