@@ -77,6 +77,7 @@ class Dispatcher:
                 "method": "start_game",
                 "status": "success",
                 "message": "The game has started!",
+                "current_turn": self.session.turn_manager.get_current_player(),
                 "legacy_products": player.get_products(),
                 "player": {
                     "id": player.id,

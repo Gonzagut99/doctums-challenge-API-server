@@ -68,9 +68,11 @@ class TurnManager:
 
         # Sort players by dice roll total in descending order (highest roll goes first)
         sorted_players = sorted(roll_results, key=lambda x: x[1], reverse=True)
+        
 
         # Set player_order based on sorted player IDs
         self.player_order = [player_id for player_id, _ in sorted_players]
+        self.player_detailed_list = [player for player in self.player_detailed_list if player["playerId"] in self.player_order]
         self.current_turn_index = 0  # Reset to the start of the new turn order
     
     
