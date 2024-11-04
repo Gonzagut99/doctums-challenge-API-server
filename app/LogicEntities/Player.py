@@ -22,7 +22,11 @@ class Player:
         self.salaries_to_pay = 0
         self.is_host = False
         self.avatar_id = avatar_id
-
+        
+        
+    def get_products(self):
+        #get only all products name
+        return [p for p in self.products.keys()]
 
     
     def _add_legacy_product(self, product_id, actual_month:int):

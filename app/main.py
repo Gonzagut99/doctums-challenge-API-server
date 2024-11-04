@@ -12,8 +12,10 @@ from app.LogicEntities.Context import Context
 from app.LogicEntities.GameSessions import GameSessionLogicContext
 from app.config.database import create_db_and_tables
 from app.routers.http.ResponseModel import ResponseModel
-from app.websockets.ws_manager import ConnectionManager
 from pathlib import Path
+
+
+
 
 
 DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
@@ -108,6 +110,7 @@ from app.routers.ws_router import ws_router
 app.include_router(ws_router)
 app.include_router(game_http_router)
 app.include_router(player_http_router)
+
 
 @app.get('/', tags = ['home'])
 def message ():

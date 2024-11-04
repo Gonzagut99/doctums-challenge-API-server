@@ -7,7 +7,6 @@ from app.LogicEntities.Context import Context
 from app.LogicEntities.GameSession import GameSessionLogic
 from app.LogicEntities.Player import Player
 from app.services.PlayerService import PlayerService
-from app.websockets.ws_manager import ConnectionManager
 
 class Dispatcher:
     def __init__(self, session: GameSessionLogic, context: Context):
@@ -68,18 +67,23 @@ class Dispatcher:
           await self.manager.send_personal_json({"status": "error", "message": "Only the host can start the game"}, websocket)
           return
         self.session.load_players_games()
+        self.session.turn_manager.set_turn_order(self.session.connected_players)
         connected_players = self.session.get_players()
+        
+        turn_order = self.session.turn_manager.get_turn_order_list()
         # Initialize game for all players
         for player in connected_players:
             response = {
                 "method": "start_game",
                 "status": "success",
                 "message": "The game has started!",
+                "legacy_products": f"{player.get_products()}" ,
                 "player": {
                     "id": player.id,
                     "name": player.name,
                     "avatarId": player.avatar_id
-                }
+                },
+                "turns_order": turn_order
                 
             }
             await self.manager.send_message_by_port(response, player.connection_port)
