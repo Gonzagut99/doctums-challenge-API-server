@@ -1,9 +1,9 @@
 from typing import Sequence
 from sqlmodel import Session, select
-from app.LogicEntities.Game import GameLogic
-from app.LogicEntities.GameSession import GameSessionLogic
 from app.config.database import engine
 from app.models.GameSession import GameSessionModel, GameSessionCreate
+from app.LogicEntities.GameSession import GameSessionLogic
+from app.LogicEntities.Game import GameLogic
 from app.main import gameSessions
 
 class GameSessionService:

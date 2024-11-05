@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Path, status, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from app.models.GameSession import GameSessionCreate, GameSessionModel
 from app.routers.http.ResponseModel import ResponseModel
 from app.services.GameSessionService import GameSessionService
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+from app.main import context
 
 from app.utils.error_handlers import handle_404exception
 
@@ -17,6 +18,7 @@ async def create_game_session()-> JSONResponse:
     players = new_game.players
     new_game = new_game.model_dump()
     new_game["players"] = players
+    service.generate_new_game_session_logic(new_game["id"], game_context=context)
     
     return JSONResponse(
         content=ResponseModel(
