@@ -22,7 +22,7 @@ class Player:
         self.salaries_to_pay = 0
         self.is_host = False
         self.avatar_id = avatar_id
-        
+        self.recently_bought_modifiers = dict()
         
     def get_products(self):
         #get only all products name
@@ -37,7 +37,7 @@ class Player:
             return
         purchased_product = deepcopy(product)
         purchased_product.purchased_on = actual_month
-        purchased_product.is_legacy = True
+        purchased_product.is_purchased = False
         self.products[product_id] = purchased_product
         for efficiency in self.efficiencies.values():
             efficiency.start_with_legacy_points(self.products[product_id])
@@ -49,6 +49,17 @@ class Player:
             return False
 
         return True
+    
+    def get_recently_bought_modifiers(self):
+        modifiers = deepcopy(self.recently_bought_modifiers)
+        self.recently_bought_modifiers.clear()
+        return modifiers
+    
+    def add_recently_bought_modifier(self, modifier, modifier_id):
+        if self.recently_bought_modifiers.get(modifier, None) is None:
+            self.recently_bought_modifiers[modifier] = [modifier_id]
+        else:
+            self.recently_bought_modifiers[modifier].append(modifier_id)
 
     def _add_product(self, product_id, actual_month):
         product = self.context.PRODUCTS.get(product_id, None)
@@ -56,6 +67,8 @@ class Player:
         if product_id in self.products.keys():
             print(f"Product {name} is already available")
             return
+        else:
+            self.add_recently_bought_modifier("products", product_id)
         purchased_product = deepcopy(product)
         purchased_product.purchased_on = actual_month
         
@@ -122,7 +135,7 @@ class Player:
 
         if modifier_type == "product":
             purchased_modifiers = {
-                key: value for key, value in self.products.items() if value.purchased_on == month_to_check and not value.is_legacy
+                key: value for key, value in self.products.items() if value.purchased_on == month_to_check and value.is_purchased
             }
         elif modifier_type == "project":
             purchased_modifiers = {
@@ -137,7 +150,7 @@ class Player:
         return len(purchased_modifiers)
 
     def buy_product(self, product_id, actual_month):
-        if self.check_month_number_of_purchases("product") >= 5:
+        if self.check_month_number_of_purchases("product", actual_month) >= 5:
             print("You have already purchased 5 products this month, you are not allowed to buy more")
             return
         product = self.context.PRODUCTS.get(product_id, None)
@@ -146,7 +159,6 @@ class Player:
             self._add_product(product_id, actual_month)
             # Todo: print some message if the requirements for the product are not bought
             self.budget -= product.cost
-        print(f"Presupuesto restante: {self.budget}")
 
     def buy_project(self, project_id, actual_month, month_to_start):
         
@@ -163,6 +175,8 @@ class Player:
         if project_id in self.projects.keys():
             print(f"Project {name} is already available")
             return
+        else:
+            self.add_recently_bought_modifier("projects", project_id)
         if self.budget_enough_for_buying(project):
             bought_project = deepcopy(project)
             bought_project.purchased_on = actual_month
@@ -181,6 +195,8 @@ class Player:
         if resource_id in self.resources.keys():
             print(f"Resource {name} is already available")
             return
+        else:
+            self.add_recently_bought_modifier("resources", resource_id)
         if not self.budget_enough_for_buying(resource):
             return
 

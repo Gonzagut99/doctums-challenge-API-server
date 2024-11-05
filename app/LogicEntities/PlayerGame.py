@@ -24,7 +24,10 @@ class PlayerGame():
         self.event_manager:EventManager = EventManager(self.player)
         self.time_manager:TimeManager = TimeManager(self.player)
         self.player_state:str|None = 'playing' #"broke", "playing", "finished"
-        self.turn_state:str|None = 'playing' #end
+        self.turn_state:str|None = 'end' #end, playing
+    
+    def is_player_turn(self):
+        return self.turn_state == "playing"
         
     def load_player_data(self):
         self.player.get_legacy(self.time_manager.current_month)
@@ -37,6 +40,20 @@ class PlayerGame():
         self.launch_new_journey_actions()
         # while not self.is_journey_finished() and self.player_state == "playing":
         #     self.turn_play()
+    def submit_plan(self, actions:dict[str,list]):
+        if self.turn_state == "playing":
+            actual_month = self.time_manager.current_month
+            if actions.get("products"):
+                for product_id in actions.get("products"):
+                    self.player.buy_product(product_id, actual_month)
+            if actions.get("projects"):
+                for project_id in actions.get("projects"):
+                    self.player.buy_project(project_id, actual_month, actual_month + 1)
+            if actions.get("resources"):
+                for resource_id in actions.get("resources"):
+                    self.player.hire_resource(resource_id, actual_month, actual_month)
+        else:
+            print("No puedes hacer acciones en este turno")
     
     def begin_turn(self):
         self.turn_state = "playing"

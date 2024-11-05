@@ -68,8 +68,9 @@ class Dispatcher:
           return
         self.session.load_players_games()
         self.session.turn_manager.set_turn_order(self.session.connected_players)
-        connected_players = self.session.get_players()
+        self.session.turn_manager.update_players_turns_state(self.session.playersgames)
         
+        connected_players = self.session.get_players()
         turn_order = self.session.turn_manager.get_turn_order_list()
         # Initialize game for all players
         for player in connected_players:
@@ -83,6 +84,7 @@ class Dispatcher:
                     "id": player.id,
                     "name": player.name,
                     "avatarId": player.avatar_id,
+                    "budget": player.budget,
                     "efficiencies": player.get_efficiencies(),
                 },
                 "turns_order": turn_order
@@ -93,13 +95,26 @@ class Dispatcher:
 
     async def handle_submit_plan(self, game_id: str, websocket: WebSocket, message: dict):
         actions = message.get("actions")
+        #"actions": {
+        #     "products": ["10", "11"],
+        #     "projects": [],
+        #     "resources": []
+        # }
         # Process action plan submission
+        playergame = self.session.get_playergame(self.player)
+        playergame.submit_plan(actions)
+        self.session.turn_manager.update_players_turns_state(self.session.playersgames)
+        
+        
         response = {
             "method": "submit_plan",
             "status": "success",
-            "message": f"Plan submitted for player {self.player.name}"
+            "bought_modifiers": self.player.get_recently_bought_modifiers(),
+            "player": {
+                "budget": self.player.budget,
+            },
         }
-        await self.manager.broadcast(game_id, response)
+        await self.manager.send_personal_json(response, websocket)
 
     async def handle_roll_dice(self, game_id: str, websocket: WebSocket, message: dict):
         player_id = message.get("playerId")

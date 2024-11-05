@@ -14,6 +14,9 @@ class GameLogic(GameSessionLogic):
         self.playersgames = [PlayerGame(player=player) for player in self.connected_players]
         for playergame in self.playersgames:
             playergame.load_player_data()
+
+    def get_playergame(self, player: Player) -> PlayerGame:
+        return next(playergame for playergame in self.playersgames if playergame.player == player)
     
     def start_game(self, high_dice_score_player: int):
         self.order_players(high_dice_score_player)
@@ -48,7 +51,19 @@ class TurnManager:
     
     def get_turn_order_list(self):
         return self.player_detailed_list
-
+    
+    def update_players_turns_state(self, playersgames: list[PlayerGame]):
+        """
+        Update the state of the player's turn to begin.
+        
+        Args:
+            playersgames (List[PlayerGame]): List of PlayerGame objects.
+        """
+        for playergame in playersgames:
+            if playergame.player.id == self.get_current_player():
+                playergame.begin_turn()
+       
+        
         
     def set_turn_order(self, players: list[Player]):
         """
@@ -68,11 +83,11 @@ class TurnManager:
 
         # Sort players by dice roll total in descending order (highest roll goes first)
         sorted_players = sorted(roll_results, key=lambda x: x[1], reverse=True)
+        self.player_detailed_list = sorted(self.player_detailed_list, key=lambda x: x["total"], reverse=True)
         
 
         # Set player_order based on sorted player IDs
         self.player_order = [player_id for player_id, _ in sorted_players]
-        self.player_detailed_list = [player for player in self.player_detailed_list if player["playerId"] in self.player_order]
         self.current_turn_index = 0  # Reset to the start of the new turn order
     
     
