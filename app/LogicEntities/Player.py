@@ -1,4 +1,5 @@
 from copy import deepcopy
+from fastapi import WebSocket
 import numpy as np
 import random
 from typing import List, Tuple
@@ -8,9 +9,8 @@ from app.LogicEntities.Efficiency import Efficiency
 from app.LogicEntities.Modifiers import  Product, Project, Resource
 
 class Player:
-    def __init__(self, context:Context=None, id=None, name=None, avatar_id:int = 1 , initial_budget=100000, connection_port =None):
+    def __init__(self, context:Context=None, id=None, name=None, avatar_id:int = 1 , initial_budget=100000, connection =None):
         self.id:str|None = id
-        self.connection_port:int|None = connection_port
         self.name:str|None = name
         self.context:Context|None = context
         self.efficiencies:dict[str,Efficiency] = deepcopy(self.context.EFFICIENCIES)  # standard efficiencies beginning with 0 points
@@ -23,6 +23,7 @@ class Player:
         self.is_host = False
         self.avatar_id = avatar_id
         self.recently_bought_modifiers = dict()
+        self.connection:WebSocket | None = connection
         
     def get_products(self):
         #get only all products name
@@ -55,11 +56,40 @@ class Player:
         self.recently_bought_modifiers.clear()
         return modifiers
     
-    def add_recently_bought_modifier(self, modifier, modifier_id):
+    def add_recently_bought_modifier(self, modifier, modifier_id): 
         if self.recently_bought_modifiers.get(modifier, None) is None:
             self.recently_bought_modifiers[modifier] = [modifier_id]
         else:
             self.recently_bought_modifiers[modifier].append(modifier_id)
+            
+    # def get_products_state(self):
+    #     product_state_list = [] 
+    #     for product in self.products.values():
+    #         _ , purchased_requirements = self.is_product_meeting_requirements(product)
+    #         product_state_list.append({
+    #             "product_id": product.ID,
+    #             "is_enabled": product.able_to_grant_points,
+    #             "purchased_requirements": [p.ID for p in purchased_requirements]
+    #         })
+    #     return product_state_list
+
+    # def get_projects_state(self):
+    #     #return project_id and remaining_time to finish
+    #     list_projects = []
+    #     for project in self.projects.values():
+    #         list_projects.append({
+    #             "project_id": project.ID,
+    #             "remaining_time": self.time_manager.get_project_remaining_time(project)
+    #         })
+        
+    # def get_resources_state(self):
+    #     list_resources = []
+    #     for resource in self.resources.values():
+    #         list_resources.append({
+    #             "resource_id": resource.ID,
+    #             "remaining_time": self.time_manager.get_resource_remaining_time(resource)
+    #         })     
+        
 
     def _add_product(self, product_id, actual_month):
         product = self.context.PRODUCTS.get(product_id, None)
@@ -72,12 +102,12 @@ class Player:
         purchased_product = deepcopy(product)
         purchased_product.purchased_on = actual_month
         
-        is_meeting_requirements, number_of_requirements_needed = self.is_product_meeting_requirements(product)
+        is_meeting_requirements, purchased_requirements = self.is_product_meeting_requirements(product)
         self.products[product_id] = purchased_product
         
         if not is_meeting_requirements:
             self.disable_product_thriving(product)
-            print(f"Puedes añadir este producto: '{name}', pero no te dara puntos porque te falta tener al menos {number_of_requirements_needed} de estos productos: {product.requirements}")
+            # print(f"Puedes añadir este producto: '{name}', pero no te dara puntos porque te falta tener al menos {number_of_requirements_needed} de estos productos: {product.requirements}")
         else:
             self.enable_product_thriving(product)
         self.update_products_thriving_state()
@@ -120,15 +150,17 @@ class Player:
         ]
         #number_of_requirements_needed = requirements_dict.get(len(product_requirements), 0)
         number_of_requirements_needed = requirements_dict.get(len(product_requirements), 4)
-        return len(purchased_requirements) >= number_of_requirements_needed,  number_of_requirements_needed
+        
+        return len(purchased_requirements) >= number_of_requirements_needed,  purchased_requirements
     
     def update_products_thriving_state(self):
         for product in self.products.values():
-            is_meeting_requirements, number_of_requirements_needed = self.is_product_meeting_requirements(product)
+            is_meeting_requirements, purchased_requirements = self.is_product_meeting_requirements(product)
             if is_meeting_requirements:
                 self.enable_product_thriving(product) and print(f"El Producto '{product.name}' ya puede otorgarte puntos porque cumple los requerimientos")
             else:
-                self.disable_product_thriving(product) and print(f"Este: '{product.name}' aún no te dara puntos porque te falta tener al menos {number_of_requirements_needed} de estos productos: {product.requirements}")
+                self.disable_product_thriving(product) 
+                #print(f"Este: '{product.name}' aún no te dara puntos porque te falta tener al menos {number_of_requirements_needed} de estos productos: {product.requirements}")
 
     def check_month_number_of_purchases(self, modifier_type, month_to_check:int):
         purchased_modifiers = None

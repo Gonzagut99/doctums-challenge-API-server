@@ -37,7 +37,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     # Check if the game session exists
     game_session_logic = GameSessionService().get_session_logic(game_id)
     if not game_session_logic:
-        await websocket.send_json({"status": "error", "message": "Game session does not exist"})
+        await websocket.send_json({"status": "error", "message": "No existe la sesión a la que intentas conectarte"})
         await websocket.close()
         return
 
@@ -47,7 +47,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
     try:
         while True:
             data = await websocket.receive_json()
-            # Use cached `player` in further processing or disp3atch if needed
+            # Use cached `player` in further processing or dispatch if needed
             await dispatcher.dispatch(game_id, websocket, data)
             
     except WebSocketDisconnect:

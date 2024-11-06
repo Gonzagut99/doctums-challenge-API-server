@@ -32,10 +32,3 @@ class ConnectionManager:
     async def send_personal_json(self, message: dict, connection:WebSocket):
         """Send a JSON message to a specific connection, an stringified JSON object is expected"""
         await connection.send_json(message)
-        
-    async def send_message_by_port(self, message: dict, port:int):
-        for connection in self.connections:
-            if connection.client.port == port:
-                await connection.send_json(message)
-                return
-        return False

@@ -14,10 +14,6 @@ from app.config.database import create_db_and_tables
 from app.routers.http.ResponseModel import ResponseModel
 from pathlib import Path
 
-
-
-
-
 DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
 
 @asynccontextmanager

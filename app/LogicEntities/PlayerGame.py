@@ -3,6 +3,7 @@ from operator import itemgetter
 import random
 from typing import List
 
+from fastapi import WebSocket
 import numpy as np
 from app.LogicEntities.Context import Context
 from app.LogicEntities.Efficiency import Efficiency
@@ -25,6 +26,11 @@ class PlayerGame():
         self.time_manager:TimeManager = TimeManager(self.player)
         self.player_state:str|None = 'playing' #"broke", "playing", "finished"
         self.turn_state:str|None = 'end' #end, playing
+        self.player_connection: WebSocket = self.player.connection
+        self.is_first_turn:bool = False
+    
+    def set_first_turn(self):
+        self.is_first_turn = True
     
     def is_player_turn(self):
         return self.turn_state == "playing"
@@ -32,14 +38,59 @@ class PlayerGame():
     def load_player_data(self):
         self.player.get_legacy(self.time_manager.current_month)
         self.player.update_products_thriving_state()
+        
+    def begin_first_turn(self):
+        self.turn_state = "playing"
+        
+    def begin_regular_turn(self):
+        self.turn_state = "playing"
+        self.sort_steps_to_advance()
+        # Time control
+        if not self.time_manager.is_weekend() and not self.is_journey_finished():
+            self.time_manager.notify_current_day_in_month()
+            self.time_manager.notify_current_day_of_week()
+            #We only sent data to player if he can do any action
+        if self.time_manager.is_weekend():
+            self.time_manager.notify_current_day_in_month()
+            self.time_manager.notify_current_day_of_week()
+            self.time_manager.notify_weekend()
+        if not self.is_journey_finished():
+            self.event_manager.notify_event_end()
+            # Only when journey is not finished, can the new month actions be launched
+            self.launch_new_month_actions()
+        if self.is_journey_finished():
+            self.handle_finish_journey()     
     
     def start_game_journey(self):
         # random.seed(0)
         # np.random.seed(0)
-        self.begin_turn()
-        self.launch_new_journey_actions()
+        if self.is_first_turn:
+            self.begin_first_turn()
+            self.launch_new_journey_actions()
         # while not self.is_journey_finished() and self.player_state == "playing":
         #     self.turn_play()
+    
+    def launch_new_journey_actions(self):
+        if self.time_manager.is_new_month():
+            self.time_manager.start_new_month()
+            self.is_first_turn = False
+            self.time_manager.first_turn_in_month = False
+            #Then the player must decide if he wants to buy products, projects or resources
+
+    #Continues journey in future turns
+    # Called by the dispatcher after the first player turn and when beginning a new turn
+    def proceed_journey(self):
+        self.begin_regular_turn()
+    
+    #Called by the dispatcher after the player has submitted his action plan
+    def resume_turn(self):
+        self.proceed_turn()
+        self.end_turn()
+    
+    def end_turn(self):
+        self.turn_state = "end"
+    
+    #Called by the dispatcher after the player has submitted his action plan      
     def submit_plan(self, actions:dict[str,list]):
         if self.turn_state == "playing":
             actual_month = self.time_manager.current_month
@@ -55,16 +106,6 @@ class PlayerGame():
         else:
             print("No puedes hacer acciones en este turno")
     
-    def begin_turn(self):
-        self.turn_state = "playing"
-    
-    def end_turn(self):
-        self.turn_state = "end"
-    
-    def turn_play(self):
-        self.proceed_journey()
-        self.end_turn() 
-    
     def launch_new_month_actions(self):
         if self.time_manager.is_new_month():
             self.time_manager.start_new_month()
@@ -73,37 +114,23 @@ class PlayerGame():
             self.player.get_products_from_projects(self.time_manager.finished_projects, self.time_manager.current_month)
             self.player.get_products_from_resources(self.time_manager.finished_resources, self.time_manager.current_month)
             self.player.update_products_thriving_state()
+            self.update_projects_time()
+            self.update_resources_time()
             self.launch_buy_modifiers_actions()
             self.time_manager.first_turn_in_month = False
-    
-    def launch_new_journey_actions(self):
-        if self.time_manager.is_new_month():
-            self.time_manager.start_new_month()
-            #self.launch_buy_modifiers_actions()
-            self.time_manager.first_turn_in_month = False
             
-    
     def sort_steps_to_advance(self):
         dices, steps = self.player.throw_dices(self.journey_dices_number)
         self.current_dice_roll = dices
         self.current_dice_result = steps
         self.time_manager.advance_day(steps)
         
-    def proceed_journey(self)->None:
-        self.sort_steps_to_advance()
-        self.launch_new_month_actions()
+    def proceed_turn(self)->None:
+        if self.turn_state == "end":
+            raise Exception("It's not the player's turn")
+        #Time control
         if not self.time_manager.is_weekend() and not self.is_journey_finished():
-            self.time_manager.notify_current_day_in_month()
-            self.time_manager.notify_current_day_of_week()
             self.launch_event_flow()
-        if self.time_manager.is_weekend():
-            self.time_manager.notify_current_day_in_month()
-            self.time_manager.notify_current_day_of_week()
-            self.time_manager.notify_weekend()
-        if not self.is_journey_finished():
-            self.event_manager.notify_event_end()
-        if self.is_journey_finished():
-            self.handle_finish_journey()
 
     def launch_event_flow(self):
         event_level = self.get_board_field_number()
@@ -209,6 +236,48 @@ class PlayerGame():
     
     def wanna_buy_resource_actions(self, resource_id:str):
         self.player.hire_resource(str(resource_id))
+        
+    def update_projects_time(self):
+        #all projects not in finished projects
+        for project in self.player.projects.values():
+            if not project.is_finished(self.time_manager.current_month):
+                project.update_remaining_time(self.time_manager.current_month)
+    
+    def update_resources_time(self):
+        for resource in self.player.resources.values():
+            if not resource.is_finished(self.time_manager.current_month):
+                resource.update_remaining_time(self.time_manager.current_month)
+                
+    def update_player_products_thriving_state(self):
+        self.player.update_products_thriving_state()
+                
+    def get_products_state(self):
+        product_state_list = [] 
+        for product in self.player.products.values():
+            _ , purchased_requirements = self.player.is_product_meeting_requirements(product)
+            product_state_list.append({
+                "product_id": product.ID,
+                "is_enabled": product.able_to_grant_points,
+                "purchased_requirements": [p.ID for p in purchased_requirements]
+            })
+        return product_state_list
+
+    def get_projects_state(self):
+        #return project_id and remaining_time to finish
+        list_projects = []
+        for project in self.player.projects.values():
+            list_projects.append({
+                "project_id": project.ID,
+                "remaining_time": self.time_manager.get_project_remaining_time(project)
+            })
+        
+    def get_resources_state(self):
+        list_resources = []
+        for resource in self.player.resources.values():
+            list_resources.append({
+                "resource_id": resource.ID,
+                "remaining_time": self.time_manager.get_resource_remaining_time(resource)
+            }) 
             
             
 
@@ -380,6 +449,7 @@ class EventManager:
             
     def notify_possible_points_to_be_granted(self, points:int):
         print(f"Se pueden otorgar {points} puntos en total. (Sumando los posibles puntos de los modificadores y los puntos de fortaleza de las eficiencias)")
+
 class TimeManager:
     def __init__(self, player:Player) -> None:
         self.player = player
@@ -430,6 +500,7 @@ class TimeManager:
     def start_new_month(self):
         self.old_month = self.current_month
         
+        
     def is_weekend(self):
         return self.current_day_of_week in [6, 0]
     
@@ -450,6 +521,12 @@ class TimeManager:
     
     def check_month_limit(self):
         return self.current_month >= self.max_running_projects
+    
+    def get_project_remaining_time(self, project:Project):
+        return project.start_datum + project.project_length - self.current_month
+    
+    def get_resource_remaining_time(self, resource:Resource):
+        return resource.start_datum + resource.resource_lenght - self.current_month
     
     def notify_current_day_in_month(self):
         return print(f"Estas en el {self.current_day_in_month} / {self.current_month}")
