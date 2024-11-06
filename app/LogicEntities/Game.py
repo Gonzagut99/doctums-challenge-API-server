@@ -90,35 +90,37 @@ class TurnManager:
         return self.player_detailed_list
     
     # Se llaman una vez para cada jugador que comienza el juego    
-    def launch_first_turn_begin_actions(self, playersgames: list[PlayerGame]):
-        for playergame in playersgames:
-            if playergame.player.id == self.get_current_player():
-                playergame.set_first_turn()
-                playergame.start_game_journey()
-            else:
-                raise Exception("It is not the turn of this player")
+    # def launch_first_turn_begin_actions(self, playersgames: list[PlayerGame]):
+    #     for playergame in playersgames:
+    #         if playergame.player.id == self.get_current_player():
+    #             playergame.set_first_turn()
+    #             playergame.start_game_journey()
+    #         else:
+    #             raise Exception("It is not the turn of this player")
                 
-    def launch_after_planning_first_turn_actions(self, playersgames: list[PlayerGame]):
-        for playergame in playersgames:
-            if playergame.player.id == self.get_current_player():
-                playergame.begin_regular_turn() #After rolling the dices the first turn can end up in a new month
+    # def launch_after_planning_first_turn_actions(self, playersgames: list[PlayerGame]):
+    #     for playergame in playersgames:
+    #         if playergame.player.id == self.get_current_player():
+    #             playergame.begin_regular_turn() #After rolling the dices the first turn can end up in a new month
     
-    # If the prevouss process above ends up in a new month, we should wait 'til the player goes through the planning phase again, in any case, at the end, we call this method
-    def proceed_with_remaining_first_turn_actions(self, playersgames: list[PlayerGame]):
-        for playergame in playersgames:
-            if playergame.player.id == self.get_current_player():
-                playergame.resume_turn()
-                
-                
+    # # If the prevouss process above ends up in a new month, we should wait 'til the player goes through the planning phase again, in any case, at the end, we call this method
+    # def proceed_with_remaining_first_turn_actions(self, playersgames: list[PlayerGame]):
+    #     for playergame in playersgames:
+    #         if playergame.player.id == self.get_current_player():
+    #             playergame.resume_turn()      
     
+    # Execute 1st step
     # Called when any other turn after the first one is finished           
     def proceed_with_new_turn_in_journey(self, playersgames: list[PlayerGame]):
         for playergame in playersgames:
             if playergame.player.id == self.get_current_player():
-                playergame.proceed_journey()
+                playergame.begin_turn()
+
+    # 2nd step is directly applied to the player game
     
+    # Execute 3rd step
     # Se llama para continuar un turno cualquiera
-    def proceed_with_raimining_regular_turn_actions(self, playersgames: list[PlayerGame]):
+    def proceed_with_raimining_turn_actions(self, playersgames: list[PlayerGame]):
         for playergame in playersgames:
             if playergame.player.id == self.get_current_player():
                 playergame.resume_turn()

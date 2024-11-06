@@ -264,10 +264,16 @@ class Player:
     def check_efficiencies(self):
         pass
 
-    def apply_challenge_result(self, result: Tuple):
+    def apply_challenge_result(self, result: Tuple, state:str):
         points, money = result
-        self.score += points
-        self.budget += money
+        if state == "success":
+            self.score += points
+            self.budget += money
+        elif state == "fail":
+            self.budget -= money
+            self.score -= points
+            
+
 
     def display_modifier(self, list_modifiers, modifier_type):
         print(f"Modifier: {modifier_type}")

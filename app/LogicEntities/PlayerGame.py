@@ -27,10 +27,10 @@ class PlayerGame():
         self.player_state:str|None = 'playing' #"broke", "playing", "finished"
         self.turn_state:str|None = 'end' #end, playing
         self.player_connection: WebSocket = self.player.connection
-        self.is_first_turn:bool = False
+        # self.is_first_turn:bool = False
     
-    def set_first_turn(self):
-        self.is_first_turn = True
+    # def set_first_turn(self):
+    #     self.is_first_turn = True
     
     def is_player_turn(self):
         return self.turn_state == "playing"
@@ -38,15 +38,26 @@ class PlayerGame():
     def load_player_data(self):
         self.player.get_legacy(self.time_manager.current_month)
         self.player.update_products_thriving_state()
+    
+    def end_turn(self):
+        self.turn_state = "end"
         
-    def begin_first_turn(self):
-        self.turn_state = "playing"
+    def is_player_able_to_play(self):
+        if self.is_journey_finished() or self.is_game_over():
+            return False
+        return True
         
-    def begin_regular_turn(self):
+    # def begin_first_turn(self):
+    #     self.turn_state = "playing"
+
+    #1st Step
+    # def begin_regular_turn:
+    def begin_turn(self):
         self.turn_state = "playing"
+        #Since player will never surpass more than month it is possible to run the same logic in every  type of turn
         self.sort_steps_to_advance()
         # Time control
-        if not self.time_manager.is_weekend() and not self.is_journey_finished():
+        if not self.time_manager.is_weekend() and self.is_player_able_to_play():
             self.time_manager.notify_current_day_in_month()
             self.time_manager.notify_current_day_of_week()
             #We only sent data to player if he can do any action
@@ -54,42 +65,34 @@ class PlayerGame():
             self.time_manager.notify_current_day_in_month()
             self.time_manager.notify_current_day_of_week()
             self.time_manager.notify_weekend()
-        if not self.is_journey_finished():
-            self.event_manager.notify_event_end()
-            # Only when journey is not finished, can the new month actions be launched
+        if self.is_player_able_to_play():
+            # Only when journey is not finished or player hasn't lost, can the new month actions be launched
             self.launch_new_month_actions()
-        if self.is_journey_finished():
+        if not self.is_player_able_to_play():
             self.handle_finish_journey()     
     
-    def start_game_journey(self):
-        # random.seed(0)
-        # np.random.seed(0)
-        if self.is_first_turn:
-            self.begin_first_turn()
-            self.launch_new_journey_actions()
-        # while not self.is_journey_finished() and self.player_state == "playing":
-        #     self.turn_play()
+    # def start_game_journey(self):
+    #     # random.seed(0)
+    #     # np.random.seed(0)
+    #     if self.is_first_turn:
+    #         self.begin_first_turn()
+    #         self.launch_new_journey_actions()
+    #     # while not self.is_journey_finished() and self.player_state == "playing":
+    #     #     self.turn_play()
     
-    def launch_new_journey_actions(self):
-        if self.time_manager.is_new_month():
-            self.time_manager.start_new_month()
-            self.is_first_turn = False
-            self.time_manager.first_turn_in_month = False
+    # def launch_new_journey_actions(self):
+    #     if self.time_manager.is_new_month():
+    #         self.time_manager.start_new_month()
+    #         self.is_first_turn = False
+    #         self.time_manager.first_turn_in_month = False
             #Then the player must decide if he wants to buy products, projects or resources
 
     #Continues journey in future turns
     # Called by the dispatcher after the first player turn and when beginning a new turn
-    def proceed_journey(self):
-        self.begin_regular_turn()
-    
-    #Called by the dispatcher after the player has submitted his action plan
-    def resume_turn(self):
-        self.proceed_turn()
-        self.end_turn()
-    
-    def end_turn(self):
-        self.turn_state = "end"
-    
+    # def proceed_journey(self):
+    #     self.begin_turn()
+
+    #2nd step
     #Called by the dispatcher after the player has submitted his action plan      
     def submit_plan(self, actions:dict[str,list]):
         if self.turn_state == "playing":
@@ -105,6 +108,14 @@ class PlayerGame():
                     self.player.hire_resource(resource_id, actual_month, actual_month)
         else:
             print("No puedes hacer acciones en este turno")
+    
+    #3rd step
+    #Called by the dispatcher after the player has submitted his action plan
+    def resume_turn(self):
+        self.execute_eventflow()
+        self.event_manager.notify_event_end()
+        self.end_turn()   
+
     
     def launch_new_month_actions(self):
         if self.time_manager.is_new_month():
@@ -125,11 +136,11 @@ class PlayerGame():
         self.current_dice_result = steps
         self.time_manager.advance_day(steps)
         
-    def proceed_turn(self)->None:
+    def execute_eventflow(self)->None:
         if self.turn_state == "end":
             raise Exception("It's not the player's turn")
         #Time control
-        if not self.time_manager.is_weekend() and not self.is_journey_finished():
+        if not self.time_manager.is_weekend() and self.is_player_able_to_play():
             self.launch_event_flow()
 
     def launch_event_flow(self):
@@ -155,15 +166,23 @@ class PlayerGame():
         #Event Challenge
         #Challenge Phase 1: Evaluate if won or loose challenge with the difference between efficiency points and the required points
         if not self.event_manager.pass_event_challenge_phase_1(possible_total_strength_points):
+            self.event_manager.has_passed_1st_challenge = False
             dices, risk_points = self.event_manager.launch_failed_event_challenge_phase_1_actions()
+            self.event_manager.risk_challenge_dices = dices
+            self.event_manager.risk_points = risk_points
             
             #Challenge Phase 2: Evaluate if won or loose challenge with the risk points
             if not self.event_manager.pass_event_challenge_phase_2(risk_points, possible_modifiers_points):
+                self.event_manager.has_passed_2nd_challenge = False
                 self.event_manager.launch_failed_event_challenge_phase_2_actions()
             else:
-                self.event_manager.launch_pass_event_challenge_phase_2_actions(current_enabled_modifiers)    
+                self.event_manager.has_passed_2nd_challenge = True
+                self.event_manager.launch_pass_event_challenge_phase_2_actions(current_enabled_modifiers)   
+                self.event_manager.set_chosen_efficiency_rewarded_points(possible_modifiers_points)
         else:
-            self.event_manager.launch_pass_event_challenge_phase_1_actions()            
+            self.event_manager.has_passed_1st_challenge = True
+            self.event_manager.launch_pass_event_challenge_phase_1_actions(current_enabled_modifiers)  
+            self.event_manager.set_chosen_efficiency_rewarded_points(possible_modifiers_points)          
         
     def get_board_field_number(self)->int:
         board_context = self.context.board.reshape(-1)
@@ -171,14 +190,19 @@ class PlayerGame():
         return field
     
     def is_journey_finished(self)->bool:
-        if self.time_manager.journey_reached_end(self.journey_limit_days) or self.time_manager.check_month_limit():
+        if self.time_manager.journey_reached_end(self.journey_days_limit):
             return True
         elif self.player_state == "broke":
             return True
-        return False   
+        return False
+    
+    def is_game_over(self) -> bool:
+        if self.player_state == "broke":
+            return True
+        return False
     
     def handle_finish_journey(self):
-        if self.time_manager.journey_reached_end(self.journey_limit_days):
+        if self.time_manager.journey_reached_end(self.journey_days_limit):
             self.player_state = "finished"
             self.finish_player_game()
         elif self.player_state == "broke":
@@ -287,7 +311,13 @@ class EventManager:
         self.event:Event | None = None
         self.chosen_efficiency:Efficiency | None = None
         self.event_level:int|None = None
-        
+        self.has_passed_1st_challenge:bool = False
+        self.has_passed_2nd_challenge:bool = False
+        self.risk_challenge_dices:list[int] = []
+        self.risk_points:int = 0
+        self.obtained_score:int = 0
+        self.obtained_budget:int = 0
+        self.obtained_efficiencies_points:int = 0
     
     #Va a ir a efficiency
     @property        
@@ -354,18 +384,25 @@ class EventManager:
         pass_challenge_with_points_difference = self.chosen_efficiency.check_enough_points_to_pass(self.event.level,possible_efficiency_strength_points)
         return pass_challenge_with_points_difference
     
-    def launch_pass_event_challenge_phase_1_actions(self):
+    def launch_pass_event_challenge_phase_1_actions(self, enabled_modifiers:dict[str,list]):
+        enabled_products = enabled_modifiers['enabled_products']
+        enabled_projects = enabled_modifiers['enabled_projects']
+        enabled_resources = enabled_modifiers['enabled_resources']
         self.notify_phase_1_challenge_success()
-        self.player.apply_challenge_result(self.event.result_failure)
+        self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
+        self.player.apply_challenge_result(self.event.result_success, 'success')
+        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
     
     def launch_failed_event_challenge_phase_1_actions(self):
         self.notify_phase_1_challenge_failed()
         dices, risk_points = self.player.throw_dices(self.event_level)
         self.notify_dice_roll_result(dices=dices, sum_number=risk_points)
         self.notify_dice_number_to_risk_points()
+        #IMPIRTANT: It is not necessary to update rewarded points because that is define in the 2nd phase of the challenge
         return dices, risk_points
         
     def notify_risk_points(self, risk_points:int):
+        
         return print(f"El numero de puntos de riesgo es {risk_points}")
         
     def notify_phase_1_challenge_failed(self):
@@ -383,11 +420,13 @@ class EventManager:
         enabled_resources = enabled_modifiers['enabled_resources']
         self.notify_phase_2_challenge_success()
         self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
-        self.player.apply_challenge_result(self.event.result_success)
+        self.player.apply_challenge_result(self.event.result_success, 'success')
+        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
     
     def launch_failed_event_challenge_phase_2_actions(self):
         self.notify_phase_2_challenge_failed()
-        self.player.apply_challenge_result(self.event.result_failure)
+        self.player.apply_challenge_result(self.event.result_failure, "fail")
+        self.set_event_punishment(self.event.result_failure[0], self.event.result_failure[1])
         
     
     def notify_phase_2_challenge_failed(self):
@@ -395,6 +434,17 @@ class EventManager:
 
     def notify_phase_2_challenge_success(self):
         return print(f"La eficiencia paso la 2da prueba, el evento ha terminado. Se han otorgado {self.event.result_success[0]} puntos y {self.event.result_success[1]} dolares")
+    
+    def set_event_rewards(self, obtained_score:int, obtained_budget:int):
+        self.obtained_score = obtained_score
+        self.obtained_budget = obtained_budget
+        
+    def set_event_punishment(self, taken_score:int, taken_budget:int):
+        self.obtained_score = -taken_score
+        self.obtained_budget = -taken_budget
+        
+    def set_chosen_efficiency_rewarded_points(self, points:int):
+        self.obtained_efficiencies_points = points
     
     def set_chosen_efficiency(self, efficiency:Efficiency):
         self.chosen_efficiency = efficiency
@@ -486,6 +536,9 @@ class TimeManager:
     def finished_resources(self) -> List[Resource]: 
         return [value for key, value in self.player.resources.items() if value.is_finished(self.current_month)]
 
+    def journey_reached_end(self, limit_days:int):
+        return self.current_day >= limit_days
+    
     def advance_day(self, days: int):
         """Advance the current day by a given number of days."""
         self.current_day += days
@@ -515,9 +568,6 @@ class TimeManager:
             6: "Domingo"
         }
         return days[self.current_day_of_week]
-    
-    def journey_reached_end(self, limit_days:int):
-        return self.current_day >= limit_days
     
     def check_month_limit(self):
         return self.current_month >= self.max_running_projects

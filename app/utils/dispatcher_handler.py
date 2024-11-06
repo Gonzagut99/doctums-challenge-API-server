@@ -17,9 +17,11 @@ class Dispatcher:
         self.player_service = PlayerService()
         self.handlers: Dict[str, Callable] = {
             "join": self.handle_join,
-            "submit_plan": self.handle_submit_plan,
-            "roll_dice": self.handle_roll_dice,
             "start_game": self.handle_start_game,
+            "start_new_turn": self.handle_player_new_turn,
+            "submit_plan": self.handle_submit_plan,
+            "turn_event_flow": self.handle_turn_event_flow,
+            "next_turn": self.handle_next_turn
             # Add more handlers as needed
         }
     
@@ -100,42 +102,48 @@ class Dispatcher:
             }
             await self.manager.send_personal_json(response, player_game.player_connection)
 
-    async def handle_player_first_turn(self, game_id: str, websocket: WebSocket, message: dict):
-        if self.session.turn_manager.get_current_player() is None:
-            raise Exception("No current player has been set yet")
-        self.session.turn_manager.launch_first_turn_begin_actions()
-        #connected_players = self.session.get_players()
-        current_player = self.session.turn_manager.get_current_player()
+    
+    # async def handle_player_first_turn(self, game_id: str, websocket: WebSocket, message: dict):
+    #     if self.session.turn_manager.get_current_player() is None:
+    #         raise Exception("No current player has been set yet")
+    #     self.session.turn_manager.launch_first_turn_begin_actions()
+    #     #connected_players = self.session.get_players()
+    #     current_player = self.session.turn_manager.get_current_player()
 
         
-    
+    # 1st step
     async def handle_player_new_turn(self, game_id: str, websocket: WebSocket, message: dict):
         if self.session.turn_manager.get_current_player() is None:
             raise Exception("No current player has been set yet")
+        
         #connected_players = self.session.get_players()
         current_player = self.session.turn_manager.get_current_player()
         is_players_turn = current_player is self.player.id
         response:dict
         if is_players_turn:
-            self.session.turn_manager.proceed_with_new_turn_in_journey()
+            self.session.turn_manager.proceed_with_new_turn_in_journey(self.session.playersgames)
+            playergame = self.session.get_playergame(self.player)
             response = {
-                "method": "regular_player_first_turn",
+                "method": "new_turn_start",
                 "status": "success",
                 "message": "¡Avanzaste en el tablero!",
                 "current_turn": current_player,
-                "thrown_dices": [4, 3],
-                "days_advanced": 7,
+                "thrown_dices": playergame.current_dice_roll ,
+                "days_advanced": playergame.current_dice_result,
                 "time_manager": {
-                    "current_day": self.player.time_manager.current_day,
-                    "current_day_in_month": self.player.time_manager.current_day_in_month,
-                    "current_month": self.player.time_manager.current_month,
-                    "is_weekend": self.player.time_manager.is_weekend,
-                    "is_first_turn_in_month": self.player.time_manager.first_turn_in_month,
-                    "is_journey_finished": self.player.time_manager.is_journey_finished,
-                    "is_game_over": self.player.time_manager.is_game_over,
+                    "current_day": playergame.time_manager.current_day,
+                    "current_day_in_month": playergame.time_manager.current_day_in_month,
+                    "current_month": playergame.time_manager.current_month,
+                    "is_weekend": playergame.time_manager.is_weekend,
+                    "is_first_turn_in_month": playergame.time_manager.first_turn_in_month,
+                    "is_journey_finished": playergame.is_journey_finished,
+                    "is_game_over": playergame.is_game_over,
                 },
                 "player": {
                     "id": self.player.id,
+                    "products": playergame.get_products_state(),
+                    "projects": playergame.get_projects_state(),
+                    "resources": playergame.get_resources_state(),
                 }
             }
         else:
@@ -148,7 +156,7 @@ class Dispatcher:
         
         await self.manager.send_personal_json(response, websocket)
         
-
+    #2nd step
     async def handle_submit_plan(self, game_id: str, websocket: WebSocket, message: dict):
         actions = message.get("actions")
         #"actions": {
@@ -167,14 +175,15 @@ class Dispatcher:
             "bought_modifiers": self.player.get_recently_bought_modifiers(),
             "player": {
                 "budget": self.player.budget,
-                "products": self.player.get_products_state(),
-                "projects": self.player.get_projects_state(),
-                "resources": self.player.get_resources_state(),
+                "products": playergame.get_products_state(),
+                "projects": playergame.get_projects_state(),
+                "resources": playergame.get_resources_state(),
             },
         }
         await self.manager.send_personal_json(response, websocket)        
     
-    async def handle_turn_event_manager(self, game_id: str, websocket: WebSocket, message: dict):
+    # 3rd step
+    async def handle_turn_event_flow(self, game_id: str, websocket: WebSocket, message: dict):
         # Process turn manager
         # Debe de ser llamado cuando el jugador jugara su turno (avanzara dias y manejara su evento)
         # al terminar de jugar su turno acabara y se pasara al siguiente jugador
@@ -187,35 +196,36 @@ class Dispatcher:
         is_players_turn = current_player is self.player.id
         response:dict
         if is_players_turn:
-            self.session.turn_manager.proceed_with_raimining_regular_turn_actions()
+            self.session.turn_manager.proceed_with_raimining_turn_actions(self.session.playersgames)
+            playergame = self.session.get_playergame(self.player)
             response = {
-                "method": "turn_event_manager",
+                "method": "turn_event_flow",
                 "status": "success",
                 "message": "¡El evento del turno ha sido procesado!",
                 # "thrown_dices": [4, 3],
                 # "days_advanced": 7,
                 "event": {
-                    "id": 1,
-                    "level": 1,
-                    "efficiency_choosen": "10",
-                    "pass_first_challenge": False,
-                    "risk_challenge_dices": [4, 3],
-                    "pass_challenge": False,
+                    "id": playergame.event_manager.event.ID,
+                    "level": playergame.event_manager.event_level,
+                    "efficiency_choosen":  playergame.event_manager.chosen_efficiency.ID,
+                    "pass_first_challenge": playergame.event_manager.has_passed_1st_challenge,
+                    "risk_challenge_dices": playergame.event_manager.risk_challenge_dices,
+                    "risk_points": playergame.event_manager.risk_points,
+                    "pass_second_challenge": playergame.event_manager.has_passed_2nd_challenge,
                     "rewards": {
-                        "budget": 1000,
-                        "score": 100,
-                        "obtained_efficiencies_points": 10,
+                        "budget": playergame.event_manager.obtained_budget,
+                        "score": playergame.event_manager.obtained_score,
+                        "obtained_efficiencies_points": playergame.event_manager.obtained_efficiencies_points,
                     }
                 },
                 "player": {
                     "score": self.player.score,
                     "budget": self.player.budget,
-                    "products": self.player.get_products_state(),
-                    "projects": self.player.get_projects_state(),
-                    "resources": self.player.get_resources_state(),
-                    "current_day": self.session.time_manager.current_day,
+                    #"resources": self.player.get_resources_state(),
+                    #"projects": self.player.get_projects_state(),
+                    #"current_day": self.session.time_manager.current_day,
                     "effiencies": self.player.get_efficiencies(),
-                    "has_player_got_broke": False
+                    #"has_player_got_broke": False
                 },
             }
             
@@ -228,7 +238,7 @@ class Dispatcher:
                 "current_turn": current_player,
             }
         
-    
+    #4th step
     async def handle_next_turn(self, game_id: str, websocket: WebSocket, message: dict):
         # en el metodo turn_event_manager ya estamos culminando lo que es el turno del jugador
         # nosotros deberemos de recibir otra peticion desde el cliente que sera cuando el jugador ya alla terminando su evento 
@@ -255,12 +265,12 @@ class Dispatcher:
                     "player": {
                         "is_first_turn": player_game.time_manager.first_turn_in_month,
                         "current_month": player_game.time_manager.current_month,
-                        # "current_day": player_game.time_manager.current_day,
-                        # "has_player_finished_journey": False
                     }
                     
                 }
                 await self.manager.send_personal_json(response, player_game.player_connection)
+    
+    
         # else:
         #     for player_game in players_games:
         #         response = {
@@ -282,17 +292,17 @@ class Dispatcher:
         
     
 
-    async def handle_roll_dice(self, game_id: str, websocket: WebSocket, message: dict):
-        player_id = message.get("playerId")
-        # Simulate dice roll and movement
-        dice_result = [4, 3]  # Example roll result
-        total_advance = sum(dice_result)
-        response = {
-            "method": "dice_result",
-            "playerId": player_id,
-            "dice": dice_result,
-            "totalAdvance": total_advance,
-            "message": f"Player {player_id} rolled the dice and advanced {total_advance} days."
-        }
-        await self.manager.broadcast(game_id, response)
+    # async def handle_roll_dice(self, game_id: str, websocket: WebSocket, message: dict):
+    #     player_id = message.get("playerId")
+    #     # Simulate dice roll and movement
+    #     dice_result = [4, 3]  # Example roll result
+    #     total_advance = sum(dice_result)
+    #     response = {
+    #         "method": "dice_result",
+    #         "playerId": player_id,
+    #         "dice": dice_result,
+    #         "totalAdvance": total_advance,
+    #         "message": f"Player {player_id} rolled the dice and advanced {total_advance} days."
+    #     }
+    #     await self.manager.broadcast(game_id, response)
 
