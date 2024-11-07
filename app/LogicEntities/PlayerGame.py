@@ -22,8 +22,8 @@ class PlayerGame():
         self.current_dice_result:int = 0
         self.context:Context = context #TODO: GET CONTEXTO FROM GAME
         self.player:Player = player
-        self.event_manager:EventManager = EventManager(self.player)
         self.time_manager:TimeManager = TimeManager(self.player)
+        self.event_manager:EventManager = EventManager(self.player, self.time_manager)
         self.player_state:str|None = 'playing' #"broke", "playing", "finished"
         self.turn_state:str|None = 'end' #end, playing
         self.player_connection: WebSocket = self.player.connection
@@ -127,12 +127,12 @@ class PlayerGame():
             self.player.update_products_thriving_state()
             self.update_projects_time()
             self.update_resources_time()
-            self.launch_buy_modifiers_actions()
+            #self.launch_buy_modifiers_actions()
             self.time_manager.first_turn_in_month = False
             
     def sort_steps_to_advance(self):
         dices, steps = self.player.throw_dices(self.journey_dices_number)
-        self.current_dice_roll = dices
+        self.current_dice_roll = dices.tolist()
         self.current_dice_result = steps
         self.time_manager.advance_day(steps)
         
@@ -150,14 +150,14 @@ class PlayerGame():
         event = self.event_manager.take_random_event(self.time_manager.current_trimester)
         self.event_manager.set_challenger_event(event)
         required_efficiencies = self.event_manager.get_required_efficiencies()
-        self.event_manager.notify_required_own_eficiency_points()
+       # self.event_manager.notify_required_own_eficiency_points()
         
         #Also sets the chosen_efficiency within the event_manager
         self.event_manager.choose_efficiency_by_max_strength_points(required_efficiencies)
         self.event_manager.notify_chosen_efficiency_data()
         
         #get modifiers that gather requirements to grant points
-        current_enabled_modifiers:dict[str,list] = self.event_manager.enabled_modifiers()
+        current_enabled_modifiers:dict[str,list] = self.event_manager.enabled_modifiers(event)
         self.event_manager.notify_enabled_modifiers(current_enabled_modifiers)
         
         #get data to pass the event challenge
@@ -187,7 +187,7 @@ class PlayerGame():
     def get_board_field_number(self)->int:
         board_context = self.context.board.reshape(-1)
         field = board_context[self.time_manager.current_day - 1]
-        return field
+        return int(field)
     
     def is_journey_finished(self)->bool:
         if self.time_manager.journey_reached_end(self.journey_days_limit):
@@ -282,7 +282,7 @@ class PlayerGame():
             product_state_list.append({
                 "product_id": product.ID,
                 "is_enabled": product.able_to_grant_points,
-                "purchased_requirements": [p.ID for p in purchased_requirements]
+                "purchased_requirements": purchased_requirements
             })
         return product_state_list
 
@@ -294,6 +294,7 @@ class PlayerGame():
                 "project_id": project.ID,
                 "remaining_time": self.time_manager.get_project_remaining_time(project)
             })
+        return list_projects
         
     def get_resources_state(self):
         list_resources = []
@@ -302,204 +303,8 @@ class PlayerGame():
                 "resource_id": resource.ID,
                 "remaining_time": self.time_manager.get_resource_remaining_time(resource)
             }) 
+        return list_resources
             
-            
-
-class EventManager:
-    def __init__(self, player:Player) -> None:
-        self.player:Player | None = player
-        self.event:Event | None = None
-        self.chosen_efficiency:Efficiency | None = None
-        self.event_level:int|None = None
-        self.has_passed_1st_challenge:bool = False
-        self.has_passed_2nd_challenge:bool = False
-        self.risk_challenge_dices:list[int] = []
-        self.risk_points:int = 0
-        self.obtained_score:int = 0
-        self.obtained_budget:int = 0
-        self.obtained_efficiencies_points:int = 0
-    
-    #Va a ir a efficiency
-    @property        
-    def enabled_modifiers(self, event:Event) -> dict[str,list]:
-        enabled_products = [product for product in self.chosen_efficiency.get_enabled_products(list(self.player.products.values())) if product.ID in event.modifiable_products]
-        enabled_projects = [project for project in self.chosen_efficiency.get_enabled_projects(list(self.player.projects.values()), self.player.month) if project.ID in event.modifiable_projects]
-        enabled_resources = [resource for resource in self.chosen_efficiency.get_enabled_resources(list(self.player.resources.values())) if resource.ID in event.modifiable_resources]
-        
-        return {
-            "enabled_products": enabled_products,
-            "enabled_projects": enabled_projects,
-            "enabled_resources": enabled_resources
-        }    
-
-    def take_random_event(self, current_trimester:int)->Event:
-        possible_events = [
-            event_id for event_id, event in context.EVENTS.items() if event.appear_first_in_trimester <= current_trimester
-        ]
-        random_event_id = random.choice(possible_events)
-        event = deepcopy(context.EVENTS.get(random_event_id))
-        return event   
-    
-    def set_event_level(self, event_level:int):
-        self.event.level = event_level
-        self.event_level = event_level
-    
-    def get_required_efficiencies(self)->list[Efficiency]:
-        required_efficiencies_ids = self.event.required_efficiencies
-        required_efficiencies = itemgetter(*required_efficiencies_ids)(self.player.efficiencies)
-        return required_efficiencies
-    
-    def choose_efficiency_by_max_strength_points(self, required_efficiencies:List[Efficiency])->None:
-        max_strength_points = max([efficiency.points for efficiency in required_efficiencies])
-        chosen_efficiency = filter(lambda eff: eff.points == max_strength_points, required_efficiencies)
-        chosen_efficiency = list(chosen_efficiency)[0]
-        self.set_chosen_efficiency(chosen_efficiency)
-    
-    def possible_modifiers_points_granted(self, event:Event, enabled_modifiers:dict[str,list]):
-        #Calculate possible points to grant
-        enabled_products = enabled_modifiers['enabled_products']
-        enabled_projects = enabled_modifiers['enabled_projects']
-        enable_resources = enabled_modifiers['enabled_resources']
-        product_points = sum([self.chosen_efficiency.points_by_event_level(product.points_to_grant,event.level,'product') for product in enabled_products])
-        project_points = sum([self.chosen_efficiency.points_by_event_level(project.points_to_grant, event.level, 'project') for project in enabled_projects])
-        resource_points = sum([self.chosen_efficiency.points_by_event_level(resource.points_to_grant, event.level, 'resource') for resource in enable_resources])
-        return product_points, project_points, resource_points
-
-    def possible_modifiers_points_sum_to_be_granted(self, modifiers_points:tuple[int,int,int])->int:
-        return sum(modifiers_points)
-    
-    def possible_efficiency_points_to_be_granted(self, possible_modifiers_points:int, efficiency_strength_points:int)->int:
-        possible_points = possible_modifiers_points+efficiency_strength_points
-        return possible_points
-        
-    def soft_possible_efficiency_strength_points_calculation(self, current_enabled_modifiers:dict[str, list]):
-        product_pts, project_pts, resources_pts = self.possible_modifiers_points_granted(self.event, current_enabled_modifiers)
-        self.event_manager.notify_possible_modifiers_points_granted((product_pts, project_pts, resources_pts))
-        possible_modifiers_points=self.possible_modifiers_points_sum_to_be_granted((product_pts, project_pts, resources_pts))
-        possible_total_strength_points=self. possible_efficiency_points_to_be_granted(possible_modifiers_points, self.chosen_efficiency.points)
-        self.notify_possible_points_to_be_granted(possible_total_strength_points)
-        return possible_total_strength_points, possible_modifiers_points
-    
-    def pass_event_challenge_phase_1(self, possible_efficiency_strength_points:int):
-        pass_challenge_with_points_difference = self.chosen_efficiency.check_enough_points_to_pass(self.event.level,possible_efficiency_strength_points)
-        return pass_challenge_with_points_difference
-    
-    def launch_pass_event_challenge_phase_1_actions(self, enabled_modifiers:dict[str,list]):
-        enabled_products = enabled_modifiers['enabled_products']
-        enabled_projects = enabled_modifiers['enabled_projects']
-        enabled_resources = enabled_modifiers['enabled_resources']
-        self.notify_phase_1_challenge_success()
-        self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
-        self.player.apply_challenge_result(self.event.result_success, 'success')
-        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
-    
-    def launch_failed_event_challenge_phase_1_actions(self):
-        self.notify_phase_1_challenge_failed()
-        dices, risk_points = self.player.throw_dices(self.event_level)
-        self.notify_dice_roll_result(dices=dices, sum_number=risk_points)
-        self.notify_dice_number_to_risk_points()
-        #IMPIRTANT: It is not necessary to update rewarded points because that is define in the 2nd phase of the challenge
-        return dices, risk_points
-        
-    def notify_risk_points(self, risk_points:int):
-        
-        return print(f"El numero de puntos de riesgo es {risk_points}")
-        
-    def notify_phase_1_challenge_failed(self):
-        return print(f"La eficiencia no paso la 1era prueba, el evento ha terminado.")
-    
-    def notify_phase_1_challenge_success(self):
-        return print(f"La eficiencia paso la 1era prueba, se procede a la 2da prueba. Se han otorgado {self.event.result_success[0]} puntos y {self.event.result_success[1]} dolares")
-    
-    def pass_event_challenge_phase_2(self, risk_level:int, modifiers_points:int):
-        return self.chosen_efficiency.challenge_efficiency(risk_level, modifiers_points)
-    
-    def launch_pass_event_challenge_phase_2_actions(self, enabled_modifiers:dict[str,list]):
-        enabled_products = enabled_modifiers['enabled_products']
-        enabled_projects = enabled_modifiers['enabled_projects']
-        enabled_resources = enabled_modifiers['enabled_resources']
-        self.notify_phase_2_challenge_success()
-        self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
-        self.player.apply_challenge_result(self.event.result_success, 'success')
-        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
-    
-    def launch_failed_event_challenge_phase_2_actions(self):
-        self.notify_phase_2_challenge_failed()
-        self.player.apply_challenge_result(self.event.result_failure, "fail")
-        self.set_event_punishment(self.event.result_failure[0], self.event.result_failure[1])
-        
-    
-    def notify_phase_2_challenge_failed(self):
-        return print(f"La eficiencia no paso la 2da prueba, el evento ha terminado. Se han quitado {self.event.result_failure[0]} puntos y {self.event.result_failure[1]} dolares")
-
-    def notify_phase_2_challenge_success(self):
-        return print(f"La eficiencia paso la 2da prueba, el evento ha terminado. Se han otorgado {self.event.result_success[0]} puntos y {self.event.result_success[1]} dolares")
-    
-    def set_event_rewards(self, obtained_score:int, obtained_budget:int):
-        self.obtained_score = obtained_score
-        self.obtained_budget = obtained_budget
-        
-    def set_event_punishment(self, taken_score:int, taken_budget:int):
-        self.obtained_score = -taken_score
-        self.obtained_budget = -taken_budget
-        
-    def set_chosen_efficiency_rewarded_points(self, points:int):
-        self.obtained_efficiencies_points = points
-    
-    def set_chosen_efficiency(self, efficiency:Efficiency):
-        self.chosen_efficiency = efficiency
-        
-    def set_challenger_event(self, event:Event):
-        self.event = event
-    
-    #Logic to give the efficiency the points the player's modifiers can grant when passing the event's challenge
-    def update_efficiencies_with_granted_points(self,enabled_products:list[Product], enabled_projects:list[Project], enabled_resources:list[Resource]):
-        for product in enabled_products:
-            self.chosen_efficiency.update_by_product(product, 'event')(self.event_level)
-        for project in enabled_projects:
-            self.chosen_efficiency.update_by_project(project, self.event_level)
-        for resource in enabled_resources:
-            self.chosen_efficiency.update_by_resource(resource, self.event_level)
-        
-    def notify_event_level(self):
-        return print(f"El nivel del evento es {self.event_level}")
-    
-    def notify_dice_roll_result(self, dices:List[int], sum_number:int):
-        return print(f"El resultado del lanzamiento de dados es {dices} que suman: {sum_number}")
-    
-    def notify_dice_number_to_risk_points(self):
-        return print(f"Se deben lanzar {self.event_level} dados para saber cuantos puntos de riesgo se van a obtener")
-    
-    def notify_payed_salaries(self):
-        return print(f"Este nuevo mes se han pagado {self.player.salaries_to_pay}$ en los salarios de los recursos")
-    
-    def notify_event_end(self):
-        return print("El evento ha terminado")
-    
-    def notify_required_own_eficiency_points(self, required_efficiencies:List[Efficiency]):
-        data:dict[str,int] = {}
-        for efficiency in required_efficiencies:
-            data[efficiency.name] = efficiency.points
-        return print(f"Estos son los puntos de tus eficiencias que son retadas por el evento: {', '.join([f'{key}: {value}' for key, value in data.items()])}") 
-    
-    def notify_chosen_efficiency_data(self):
-        return print(f"La eficiencia escogida es {self.chosen_efficiency.name} porque es la que tiene mas puntos.")
-    
-    def notify_enabled_modifiers(self, enabled_modifiers:dict[str,list]):
-        print(f"Estos son los productos, proyectos y recursos que pueden ser modificados por el evento:")
-        print(f"Enabled products: {[product.name for product in enabled_modifiers['enabled_products']]}")
-        print(f"Enabled projects: {[project.name for project in enabled_modifiers['enabled_projects']]}")
-        print(f"Enabled resources: {[resource.name for resource in enabled_modifiers['enabled_resources']]}")
-
-    def notify_possible_modifiers_points_granted(self, modifiers_points:tuple[int,int,int]):
-        print(f"Estos son los puntos que se pueden otorgar por los modificadores:")
-        print(f"Puntos por productos: {modifiers_points[0]}")
-        print(f"Puntos por proyectos: {modifiers_points[1]}")
-        print(f"Puntos por recursos: {modifiers_points[2]}")
-            
-    def notify_possible_points_to_be_granted(self, points:int):
-        print(f"Se pueden otorgar {points} puntos en total. (Sumando los posibles puntos de los modificadores y los puntos de fortaleza de las eficiencias)")
-
 class TimeManager:
     def __init__(self, player:Player) -> None:
         self.player = player
@@ -587,4 +392,199 @@ class TimeManager:
     def notify_weekend(self):
         if self.is_weekend():
             return print(f"Es fin de semana, no te toca ningun evento")
-        return print("No es fin de semana")
+        return print("No es fin de semana")  
+
+class EventManager:
+    def __init__(self, player:Player, time_manager:TimeManager) -> None:
+        self.player:Player | None = player
+        self.time_manager:TimeManager = time_manager
+        self.event:Event | None = None
+        self.chosen_efficiency:Efficiency | None = None
+        self.event_level:int|None = None
+        self.has_passed_1st_challenge:bool = False
+        self.has_passed_2nd_challenge:bool = False
+        self.risk_challenge_dices:list[int] = []
+        self.risk_points:int = 0
+        self.obtained_score:int = 0
+        self.obtained_budget:int = 0
+        self.obtained_efficiencies_points:int = 0
+    
+    #Va a ir a efficiency
+    def enabled_modifiers(self, event:Event) -> dict[str,list]:
+        enabled_products = [product for product in self.chosen_efficiency.get_enabled_products(list(self.player.products.values())) if product.ID in event.modifiable_products]
+        enabled_projects = [project for project in self.chosen_efficiency.get_enabled_projects(list(self.player.projects.values()), self.time_manager.current_month) if project.ID in event.modifiable_projects]
+        enabled_resources = [resource for resource in self.chosen_efficiency.get_enabled_resources(list(self.player.resources.values())) if resource.ID in event.modifiable_resources]
+        
+        return {
+            "enabled_products": enabled_products,
+            "enabled_projects": enabled_projects,
+            "enabled_resources": enabled_resources
+        }    
+
+    def take_random_event(self, current_trimester:int)->Event:
+        possible_events = [
+            event_id for event_id, event in context.EVENTS.items() if event.appear_first_in_trimester <= current_trimester
+        ]
+        random_event_id = random.choice(possible_events)
+        event = deepcopy(context.EVENTS.get(random_event_id))
+        return event   
+    
+    def set_event_level(self, event_level:int):
+        self.event_level = event_level
+    
+    def get_required_efficiencies(self)->list[Efficiency]:
+        required_efficiencies_ids = self.event.required_efficiencies
+        required_efficiencies = itemgetter(*required_efficiencies_ids)(self.player.efficiencies)
+        return required_efficiencies
+    
+    def choose_efficiency_by_max_strength_points(self, required_efficiencies:List[Efficiency])->None:
+        max_strength_points = max([efficiency.points for efficiency in required_efficiencies])
+        chosen_efficiency = filter(lambda eff: eff.points == max_strength_points, required_efficiencies)
+        chosen_efficiency = list(chosen_efficiency)[0]
+        self.set_chosen_efficiency(chosen_efficiency)
+    
+    def possible_modifiers_points_granted(self, event_level:int, enabled_modifiers:dict[str,list]):
+        #Calculate possible points to grant
+        enabled_products = enabled_modifiers['enabled_products']
+        enabled_projects = enabled_modifiers['enabled_projects']
+        enable_resources = enabled_modifiers['enabled_resources']
+        product_points = sum([self.chosen_efficiency.points_by_event_level(product.points_to_grant,event_level,'product') for product in enabled_products])
+        project_points = sum([self.chosen_efficiency.points_by_event_level(project.points_to_grant, event_level, 'project') for project in enabled_projects])
+        resource_points = sum([self.chosen_efficiency.points_by_event_level(resource.points_to_grant, event_level, 'resource') for resource in enable_resources])
+        return product_points, project_points, resource_points
+
+    def possible_modifiers_points_sum_to_be_granted(self, modifiers_points:tuple[int,int,int])->int:
+        return sum(modifiers_points)
+    
+    def possible_efficiency_points_to_be_granted(self, possible_modifiers_points:int, efficiency_strength_points:int)->int:
+        possible_points = possible_modifiers_points+efficiency_strength_points
+        return possible_points
+        
+    def soft_possible_efficiency_strength_points_calculation(self, current_enabled_modifiers:dict[str, list]):
+        product_pts, project_pts, resources_pts = self.possible_modifiers_points_granted(self.event_level, current_enabled_modifiers)
+        #self.event_manager.notify_possible_modifiers_points_granted((product_pts, project_pts, resources_pts))
+        possible_modifiers_points=self.possible_modifiers_points_sum_to_be_granted((product_pts, project_pts, resources_pts))
+        possible_total_strength_points=self. possible_efficiency_points_to_be_granted(possible_modifiers_points, self.chosen_efficiency.points)
+        #self.notify_possible_points_to_be_granted(possible_total_strength_points)
+        return possible_total_strength_points, possible_modifiers_points
+    
+    def pass_event_challenge_phase_1(self, possible_efficiency_strength_points:int):
+        pass_challenge_with_points_difference = self.chosen_efficiency.check_enough_points_to_pass(self.event_level,possible_efficiency_strength_points)
+        return pass_challenge_with_points_difference
+    
+    def launch_pass_event_challenge_phase_1_actions(self, enabled_modifiers:dict[str,list]):
+        enabled_products = enabled_modifiers['enabled_products']
+        enabled_projects = enabled_modifiers['enabled_projects']
+        enabled_resources = enabled_modifiers['enabled_resources']
+        self.notify_phase_1_challenge_success()
+        self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
+        self.player.apply_challenge_result(self.event.result_success, 'success')
+        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
+    
+    def launch_failed_event_challenge_phase_1_actions(self):
+        self.notify_phase_1_challenge_failed()
+        dices, risk_points = self.player.throw_dices(self.event_level)
+        self.notify_dice_roll_result(dices=dices, sum_number=risk_points)
+        self.notify_dice_number_to_risk_points()
+        #IMPIRTANT: It is not necessary to update rewarded points because that is define in the 2nd phase of the challenge
+        return dices.tolist(), risk_points
+        
+    def notify_risk_points(self, risk_points:int):
+        
+        return print(f"El numero de puntos de riesgo es {risk_points}")
+        
+    def notify_phase_1_challenge_failed(self):
+        return print(f"La eficiencia no paso la 1era prueba, el evento ha terminado.")
+    
+    def notify_phase_1_challenge_success(self):
+        return print(f"La eficiencia paso la 1era prueba, se procede a la 2da prueba. Se han otorgado {self.event.result_success[0]} puntos y {self.event.result_success[1]} dolares")
+    
+    def pass_event_challenge_phase_2(self, risk_level:int, modifiers_points:int):
+        return self.chosen_efficiency.challenge_efficiency(risk_level, modifiers_points)
+    
+    def launch_pass_event_challenge_phase_2_actions(self, enabled_modifiers:dict[str,list]):
+        enabled_products = enabled_modifiers['enabled_products']
+        enabled_projects = enabled_modifiers['enabled_projects']
+        enabled_resources = enabled_modifiers['enabled_resources']
+        self.notify_phase_2_challenge_success()
+        self.update_efficiencies_with_granted_points(enabled_products, enabled_projects, enabled_resources)
+        self.player.apply_challenge_result(self.event.result_success, 'success')
+        self.set_event_rewards(self.event.result_success[0], self.event.result_success[1])
+    
+    def launch_failed_event_challenge_phase_2_actions(self):
+        self.notify_phase_2_challenge_failed()
+        self.player.apply_challenge_result(self.event.result_failure, "fail")
+        self.set_event_punishment(self.event.result_failure[0], self.event.result_failure[1])
+        
+    
+    def notify_phase_2_challenge_failed(self):
+        return print(f"La eficiencia no paso la 2da prueba, el evento ha terminado. Se han quitado {self.event.result_failure[0]} puntos y {self.event.result_failure[1]} dolares")
+
+    def notify_phase_2_challenge_success(self):
+        return print(f"La eficiencia paso la 2da prueba, el evento ha terminado. Se han otorgado {self.event.result_success[0]} puntos y {self.event.result_success[1]} dolares")
+    
+    def set_event_rewards(self, obtained_score:int, obtained_budget:int):
+        self.obtained_score = obtained_score
+        self.obtained_budget = obtained_budget
+        
+    def set_event_punishment(self, taken_score:int, taken_budget:int):
+        self.obtained_score = taken_score
+        self.obtained_budget = taken_budget
+        
+    def set_chosen_efficiency_rewarded_points(self, points:int):
+        self.obtained_efficiencies_points = points
+    
+    def set_chosen_efficiency(self, efficiency:Efficiency):
+        self.chosen_efficiency = efficiency
+        
+    def set_challenger_event(self, event:Event):
+        self.event = event
+    
+    #Logic to give the efficiency the points the player's modifiers can grant when passing the event's challenge
+    def update_efficiencies_with_granted_points(self,enabled_products:list[Product], enabled_projects:list[Project], enabled_resources:list[Resource]):
+        for product in enabled_products:
+            self.chosen_efficiency.update_by_product(product, 'event')(self.event_level)
+        for project in enabled_projects:
+            self.chosen_efficiency.update_by_project(project, self.event_level)
+        for resource in enabled_resources:
+            self.chosen_efficiency.update_by_resource(resource, self.event_level)
+        
+    def notify_event_level(self):
+        return print(f"El nivel del evento es {self.event_level}")
+    
+    def notify_dice_roll_result(self, dices:List[int], sum_number:int):
+        return print(f"El resultado del lanzamiento de dados es {dices} que suman: {sum_number}")
+    
+    def notify_dice_number_to_risk_points(self):
+        return print(f"Se deben lanzar {self.event_level} dados para saber cuantos puntos de riesgo se van a obtener")
+    
+    def notify_payed_salaries(self):
+        return print(f"Este nuevo mes se han pagado {self.player.salaries_to_pay}$ en los salarios de los recursos")
+    
+    def notify_event_end(self):
+        return print("El evento ha terminado")
+    
+    def notify_required_own_eficiency_points(self, required_efficiencies:List[Efficiency]):
+        data:dict[str,int] = {}
+        for efficiency in required_efficiencies:
+            data[efficiency.name] = efficiency.points
+        return print(f"Estos son los puntos de tus eficiencias que son retadas por el evento: {', '.join([f'{key}: {value}' for key, value in data.items()])}") 
+    
+    def notify_chosen_efficiency_data(self):
+        return print(f"La eficiencia escogida es {self.chosen_efficiency.name} porque es la que tiene mas puntos.")
+    
+    def notify_enabled_modifiers(self, enabled_modifiers:dict[str,list]):
+        print(f"Estos son los productos, proyectos y recursos que pueden ser modificados por el evento:")
+        print(f"Enabled products: {[product.name for product in enabled_modifiers['enabled_products']]}")
+        print(f"Enabled projects: {[project.name for project in enabled_modifiers['enabled_projects']]}")
+        print(f"Enabled resources: {[resource.name for resource in enabled_modifiers['enabled_resources']]}")
+
+    def notify_possible_modifiers_points_granted(self, modifiers_points:tuple[int,int,int]):
+        print(f"Estos son los puntos que se pueden otorgar por los modificadores:")
+        print(f"Puntos por productos: {modifiers_points[0]}")
+        print(f"Puntos por proyectos: {modifiers_points[1]}")
+        print(f"Puntos por recursos: {modifiers_points[2]}")
+            
+    def notify_possible_points_to_be_granted(self, points:int):
+        print(f"Se pueden otorgar {points} puntos en total. (Sumando los posibles puntos de los modificadores y los puntos de fortaleza de las eficiencias)")
+

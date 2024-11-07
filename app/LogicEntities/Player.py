@@ -259,19 +259,21 @@ class Player:
 
     def throw_dices(self, number:int) -> Tuple[np.ndarray, int]:
         dices = np.random.randint(1, 6, size=number)
-        return dices, dices.sum()
+        return dices, int(dices.sum())
 
     def check_efficiencies(self):
         pass
 
     def apply_challenge_result(self, result: Tuple, state:str):
         points, money = result
-        if state == "success":
-            self.score += points
-            self.budget += money
-        elif state == "fail":
-            self.budget -= money
-            self.score -= points
+        self.score += points
+        self.budget += money
+        # if state == "success":
+        #     self.score += points
+        #     self.budget += money
+        # elif state == "fail":
+        #     self.budget -= money
+        #     self.score -= points
             
 
 

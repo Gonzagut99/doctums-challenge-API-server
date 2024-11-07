@@ -136,7 +136,7 @@ class TurnManager:
         # Roll dice for each player and store their total roll with their ID
         for player in players:
             dices, total = player.throw_dices(2) #2 dices
-            self.player_detailed_list.append({"playerId": player.id,"name": player.name, "dices": dices.tolist(), "total": int(total)})
+            self.player_detailed_list.append({"playerId": player.id,"name": player.name, "dices": dices.tolist(), "total": total})
         
     def _sort_player_order(self, players: list[Player]):
         self._roll_dices_for_order_players(players)        

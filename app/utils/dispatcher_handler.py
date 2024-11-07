@@ -134,10 +134,10 @@ class Dispatcher:
                     "current_day": playergame.time_manager.current_day,
                     "current_day_in_month": playergame.time_manager.current_day_in_month,
                     "current_month": playergame.time_manager.current_month,
-                    "is_weekend": playergame.time_manager.is_weekend,
+                    "is_weekend": playergame.time_manager.is_weekend(),
                     "is_first_turn_in_month": playergame.time_manager.first_turn_in_month,
-                    "is_journey_finished": playergame.is_journey_finished,
-                    "is_game_over": playergame.is_game_over,
+                    "is_journey_finished": playergame.is_journey_finished(),
+                    "is_game_over": playergame.is_game_over(),
                 },
                 "player": {
                     "id": self.player.id,
