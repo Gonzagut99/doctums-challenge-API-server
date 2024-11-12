@@ -128,7 +128,6 @@ class PlayerGame():
             self.update_projects_time()
             self.update_resources_time()
             #self.launch_buy_modifiers_actions()
-            self.time_manager.first_turn_in_month = False
             
     def sort_steps_to_advance(self):
         dices, steps = self.player.throw_dices(self.journey_dices_number)

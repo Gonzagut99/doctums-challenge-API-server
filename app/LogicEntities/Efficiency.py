@@ -149,7 +149,7 @@ class Efficiency:
             granted_points = self.points_by_event_level(resource.points_to_grant, event_level, "resource")
             self._add_points(granted_points)
     
-    # Prueba de riesgo        
+    # Prueba de riesgo
     def challenge_efficiency(self, risk_points:int, modifiers_points:int):
         if self.points+modifiers_points >= risk_points:
             return True

@@ -92,8 +92,9 @@ class Dispatcher:
                     "name": player_game.player.name,
                     "avatarId": player_game.player.avatar_id,
                     "budget": player_game.player.budget,
+                    "score": player_game.player.score,
                     "efficiencies": player_game.player.get_efficiencies(),
-                    "is_first_turn": player_game.time_manager.first_turn_in_month
+                    #"is_first_turn": player_game.time_manager.first_turn_in_month
                     
                     
                 },
