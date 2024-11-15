@@ -17,6 +17,7 @@ class Player:
         self.products:dict[str,Product] = dict()
         self.projects:dict[str,Project] = dict()
         self.resources:dict[str,Resource] = dict()
+        self.turn:dict[str, str] = dict()
         self.budget = initial_budget
         self.score = 0
         self.salaries_to_pay = 0

@@ -1,4 +1,5 @@
 #Tal vez podriamos hacer un patron observe para que el game se suscriba a los eventos que le interesan
+import random
 from app.LogicEntities.GameSession import GameSessionLogic
 from app.LogicEntities.Player import Player
 from app.LogicEntities.PlayerGame import PlayerGame
@@ -85,9 +86,30 @@ class TurnManager:
         self.current_turn_index = 0     # Index of the current player in the turn order
         self.turn_direction = 1         # Used to manage turn order direction (1 = forward, -1 = backward)
         self.last_turn:int = 0
+        
+    def get_random_player_id_who_hasnt_rolled_dices(self):
+        try:
+            players_who_havent_rolled_dices = [player.turn for player in self.connected_players if not player.turn["has_player_rolled_dices"]]
+            player = random.choice(players_who_havent_rolled_dices)
+            return player["playerId"]
+        except IndexError:
+            return None
+            
     
     def get_turn_order_list(self):
-        return self.player_detailed_list
+        players_who_rolled_dices = [player.turn for player in self.connected_players if player.turn["has_player_rolled_dices"]]
+        return sorted(players_who_rolled_dices, key=lambda x: x["total"], reverse=True)
+    
+    def player_rolled_dices(self, player_id: str):
+        for player in self.connected_players:
+            if player.id == player_id:
+                player.turn["has_player_rolled_dices"] = True
+                break
+            
+    def is_turn_order_stage_over(self):
+        players_who_rolled_dices = [player.turn for player in self.connected_players]
+        return all(player["has_player_rolled_dices"] for player in players_who_rolled_dices)
+        
     
     # Se llaman una vez para cada jugador que comienza el juego    
     # def launch_first_turn_begin_actions(self, playersgames: list[PlayerGame]):
@@ -136,7 +158,8 @@ class TurnManager:
         # Roll dice for each player and store their total roll with their ID
         for player in players:
             dices, total = player.throw_dices(2) #2 dices
-            self.player_detailed_list.append({"playerId": player.id,"name": player.name, "dices": dices.tolist(), "total": total})
+            player.turn = {"playerId": player.id,"name": player.name, "avatarId": player.avatar_id , "dices": dices.tolist(), "total": total, "has_player_rolled_dices": False}
+            self.player_detailed_list.append({"playerId": player.id,"name": player.name, "avatarId": player.avatar_id , "dices": dices.tolist(), "total": total})
         
     def _sort_player_order(self, players: list[Player]):
         self._roll_dices_for_order_players(players)        

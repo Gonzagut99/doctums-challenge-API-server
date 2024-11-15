@@ -14,10 +14,12 @@ class Dispatcher:
         self.context = context
         self.session = session
         self.player = None
+        
         self.player_service = PlayerService()
         self.handlers: Dict[str, Callable] = {
             "join": self.handle_join,
             "start_game": self.handle_start_game,
+            "turn_order_stage": self.handler_turn_order,
             "start_new_turn": self.handle_player_new_turn,
             "submit_plan": self.handle_submit_plan,
             "turn_event_flow": self.handle_turn_event_flow,
@@ -77,8 +79,8 @@ class Dispatcher:
         
         #connected_players = self.session.get_players()
         players_games = self.session.playersgames
-        turn_order = self.session.turn_manager.get_turn_order_list()
-        current_player = self.session.turn_manager.get_current_player()
+        # turn_order = self.session.turn_manager.get_turn_order_list()
+        current_player = self.session.turn_manager.get_random_player_id_who_hasnt_rolled_dices()
         # Initialize game for all players
         for player_game in players_games:
             response = {
@@ -96,14 +98,38 @@ class Dispatcher:
                     "efficiencies": player_game.player.get_efficiencies(),
                     #"is_first_turn": player_game.time_manager.first_turn_in_month
                     
-                    
                 },
-                "turns_order": turn_order
+                "turns_order": []
                 
             }
             await self.manager.send_personal_json(response, player_game.player_connection)
-
-    
+        
+    async def handler_turn_order(self, game_id: str, websocket: WebSocket, message: dict):
+        
+        self.session.turn_manager.player_rolled_dices(self.player.id)
+        
+        players_games = self.session.playersgames
+        turn_order = self.session.turn_manager.get_turn_order_list()
+        first_player_turn = self.session.turn_manager.get_current_player()
+        current_player_to_roll = self.session.turn_manager.get_random_player_id_who_hasnt_rolled_dices()
+        current_player = self.player
+        current_player_turn_results = current_player.turn
+        
+        
+        for player_game in players_games:
+            response = {
+                "method": "turn_order_stage",
+                "status": "success",
+                "current_turn": current_player_to_roll,
+                "first_player_turn": first_player_turn,
+                "message": f"{current_player.name} ha sacado un {current_player_turn_results['total']}" ,
+                "turns_order": turn_order,
+                "is_turn_order_stage_over": self.session.turn_manager.is_turn_order_stage_over()
+                
+            }
+            await self.manager.send_personal_json(response, player_game.player_connection)
+            
+        
     # async def handle_player_first_turn(self, game_id: str, websocket: WebSocket, message: dict):
     #     if self.session.turn_manager.get_current_player() is None:
     #         raise Exception("No current player has been set yet")
