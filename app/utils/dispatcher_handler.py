@@ -123,6 +123,7 @@ class Dispatcher:
                 "current_turn": current_player_to_roll,
                 "first_player_turn": first_player_turn,
                 "message": f"{current_player.name} ha sacado un {current_player_turn_results['total']}" ,
+                "this_player_turn_results": player_game.player.turn,
                 "turns_order": turn_order,
                 "is_turn_order_stage_over": self.session.turn_manager.is_turn_order_stage_over()
                 
