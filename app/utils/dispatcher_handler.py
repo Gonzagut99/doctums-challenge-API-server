@@ -145,21 +145,24 @@ class Dispatcher:
             raise Exception("No current player has been set yet")
         
         #connected_players = self.session.get_players()
+        players_games = self.session.playersgames
         current_player = self.session.turn_manager.get_current_player()
         is_players_turn = current_player is self.player.id
         response:dict
+        notification_to_all_connected_players:dict
         if is_players_turn:
             self.session.turn_manager.proceed_with_new_turn_in_journey(self.session.playersgames)
             playergame = self.session.get_playergame(self.player)
+            current_day = playergame.time_manager.current_day
             response = {
                 "method": "new_turn_start",
                 "status": "success",
-                "message": "¡Avanzaste en el tablero!",
+                "message": f"¡Avanzaste {current_day} dias en el tablero!",
                 "current_turn": current_player,
                 "thrown_dices": playergame.current_dice_roll ,
                 "days_advanced": playergame.current_dice_result,
                 "time_manager": {
-                    "current_day": playergame.time_manager.current_day,
+                    "current_day": current_day,
                     "current_day_in_month": playergame.time_manager.current_day_in_month,
                     "current_month": playergame.time_manager.current_month,
                     "is_weekend": playergame.time_manager.is_weekend(),
@@ -174,6 +177,18 @@ class Dispatcher:
                     "resources": playergame.get_resources_state(),
                 }
             }
+            
+            notification_to_all_connected_players = {
+                "method": "notification",
+                "status": "success",
+                "message": f"¡Turno de {self.player.name}!",
+            }
+            
+            for players_games in self.session.playersgames:
+                if players_games.player.id is not self.player.id:
+                    await self.manager.send_personal_json(notification_to_all_connected_players, players_games.player_connection)
+            
+            
         else:
             response = {
                 "method": "player_first_turn",
