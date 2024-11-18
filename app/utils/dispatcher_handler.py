@@ -23,7 +23,8 @@ class Dispatcher:
             "start_new_turn": self.handle_player_new_turn,
             "submit_plan": self.handle_submit_plan,
             "turn_event_flow": self.handle_turn_event_flow,
-            "next_turn": self.handle_next_turn
+            "next_turn": self.handle_next_turn,
+            "ping": self.handle_ping,
             # Add more handlers as needed
         }
     
@@ -35,6 +36,9 @@ class Dispatcher:
             await handler(game_id, websocket, message)
         else:
             await websocket.send_json({"status": "error", "message": f"Unknown method: {method}"})
+    
+    async def handle_ping(self, game_id: str, websocket: WebSocket, message: dict):
+        await websocket.send_json({"method": "keep_alive" ,"status": "success"})
 
     async def handle_join(self, game_id: str, websocket: WebSocket, message: dict):
         player_id = message.get("player_id")

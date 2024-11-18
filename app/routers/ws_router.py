@@ -51,7 +51,8 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             await dispatcher.dispatch(game_id, websocket, data)
             
     except WebSocketDisconnect:
+        print(f"{data} disconnected")
         game_session_logic.manager.remove_connection(websocket)
-        await game_session_logic.manager.broadcast(f"Un Jugador se ha desconectado")
+        
     
     
