@@ -22,7 +22,7 @@ class Dispatcher:
             "turn_order_stage": self.handler_turn_order,
             "start_new_turn": self.handle_player_new_turn,
             "advance_days": self.notify_player_advanced_days,
-            "update_players_positions": self.handle_updated_players_positions,
+            #"update_players_positions": self.handle_updated_players_positions,
             "submit_plan": self.handle_submit_plan,
             "turn_event_flow": self.handle_turn_event_flow,
             "next_turn": self.handle_next_turn,
@@ -60,6 +60,21 @@ class Dispatcher:
             "message": f"Has avanzado {days} días!",
             "has_player_rolled_dices": True
         }, websocket)
+        await self.notify_players_positions()
+    
+    async def notify_players_positions(self):
+        players_games = self.session.playersgames
+        players_position =  [{
+            "playerId": player.player.id,
+            "avatarId": player.player.avatar_id,
+            "currentDay": player.time_manager.current_day
+        } for player in players_games]
+        response = {
+            "method": "updated_players_positions",
+            "status": "success",
+            "players_position": players_position
+        }
+        await self.manager.broadcast_json(response)
     
     async def handle_ping(self, game_id: str, websocket: WebSocket, message: dict):
         await websocket.send_json({"method": "keep_alive" ,"status": "success"})
@@ -221,19 +236,19 @@ class Dispatcher:
         await self.manager.send_personal_json(response, websocket)
         
     #1.5 game step - 3er stage
-    async def handle_updated_players_positions(self, game_id: str, websocket: WebSocket, message: dict):
-        players_game_sessions = [self.session.get_playergame(player) for player in self.session.get_players()]
-        players_position =  [{
-            "playerId": player.player.id,
-            "avatarId": player.player.avatar_id,
-            "currentDay": player.time_manager.current_day
-        } for player in players_game_sessions]
-        response = {
-            "method": "updated_players_positions",
-            "status": "success",
-            "players_position": players_position
-        }
-        await self.manager.broadcast(json.dumps(response))
+    # async def handle_updated_players_positions(self, game_id: str, websocket: WebSocket, message: dict):
+    #     players_game_sessions = [self.session.get_playergame(player) for player in self.session.get_players()]
+    #     players_position =  [{
+    #         "playerId": player.player.id,
+    #         "avatarId": player.player.avatar_id,
+    #         "currentDay": player.time_manager.current_day
+    #     } for player in players_game_sessions]
+    #     response = {
+    #         "method": "updated_players_positions",
+    #         "status": "success",
+    #         "players_position": players_position
+    #     }
+    #     await self.manager.broadcast(json.dumps(response))
         
     #2nd step - 4th stage
     async def handle_submit_plan(self, game_id: str, websocket: WebSocket, message: dict):
