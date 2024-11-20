@@ -69,12 +69,16 @@ class Dispatcher:
             "avatarId": player.player.avatar_id,
             "currentDay": player.time_manager.current_day
         } for player in players_games]
-        response = {
-            "method": "updated_players_positions",
-            "status": "success",
-            "players_position": players_position
-        }
-        await self.manager.broadcast_json(response)
+        
+        days = self.session.get_playergame(self.player).time_manager.current_day
+        for player_game in players_games:
+            response = {
+                "method": "updated_players_positions",
+                "status": "success",
+                "messgae": f"{self.player.name} ha avanzado {days}",
+                "players_position": players_position
+            }
+            await self.manager.send_personal_json(response, player_game.player_connection)
     
     async def handle_ping(self, game_id: str, websocket: WebSocket, message: dict):
         await websocket.send_json({"method": "keep_alive" ,"status": "success"})

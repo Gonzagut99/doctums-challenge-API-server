@@ -9,7 +9,13 @@ class ConnectionManager:
         self.connections.append(connection)
 
     async def remove_connection(self, connection: WebSocket):
+        print("Disconneting all connections")
         if connection in self.connections:
+            await connection.close()
+            self.connections.remove(connection)
+
+    async def remove_connections(self,):
+        for connection in self.connections:
             await connection.close()
             self.connections.remove(connection)
 
