@@ -48,11 +48,11 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
         while True:
             data = await websocket.receive_json()
             # Use cached `player` in further processing or dispatch if needed
+            print("Received data: ", data)
             await dispatcher.dispatch(game_id, websocket, data)
             
     except WebSocketDisconnect:
-        print(f"{data} disconnected")
-        game_session_logic.manager.remove_connection(websocket)
+        game_session_logic.manager.remove_connections()
         
     
     
