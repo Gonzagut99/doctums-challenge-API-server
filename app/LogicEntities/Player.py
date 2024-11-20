@@ -195,7 +195,7 @@ class Player:
 
     def buy_project(self, project_id, actual_month, month_to_start):
         
-        if self.check_month_number_of_purchases("project") >= 1:
+        if self.check_month_number_of_purchases("project", actual_month) >= 1:
             print("You have already bought 1 project this month, you are not allowed to buy more")
             return
         
@@ -220,7 +220,7 @@ class Player:
         print(f"Presupuesto restante: {self.budget}")
 
     def hire_resource(self, resource_id, actual_month, month_to_start):
-        if self.check_month_number_of_purchases("resource") >= 1:
+        if self.check_month_number_of_purchases("resource", actual_month) >= 1:
             print("You have already hired 1 resource this month, you are not allowed to buy more")
             return
         resource = self.context.RESOURCES.get(resource_id, None)

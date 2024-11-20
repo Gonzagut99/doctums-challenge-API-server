@@ -205,7 +205,8 @@ class Dispatcher:
                     "projects": playergame.get_projects_state(),
                     "resources": playergame.get_resources_state(),
                 },
-                "is_new_turn_stage": True
+                "is_new_turn_stage": True,
+                "is_ready_to_face_event": False if playergame.time_manager.first_turn_in_month or playergame.time_manager.is_weekend() else True
             }
             
             await self.notify_all_players(f"!Turno de {self.player.name}!", exclude_player=self.player, actual_stage="is_new_turn_stage")
@@ -246,11 +247,14 @@ class Dispatcher:
         # Process action plan submission
         playergame = self.session.get_playergame(self.player)
         playergame.submit_plan(actions)
-        playergame.update_player_products_thriving_state()        
+        playergame.update_player_products_thriving_state()   
+        current_player = self.session.turn_manager.get_current_player()     
         
         response = {
             "method": "submit_plan",
             "status": "success",
+            "message": "!Plan de acción enviado! Continuemos con el evento.",
+            "current_turn": current_player,
             "bought_modifiers": self.player.get_recently_bought_modifiers(),
             "player": {
                 "budget": self.player.budget,
@@ -258,6 +262,8 @@ class Dispatcher:
                 "projects": playergame.get_projects_state(),
                 "resources": playergame.get_resources_state(),
             },
+            "show_modal": True,
+            "is_ready_to_face_event": True
         }
         await self.manager.send_personal_json(response, websocket)        
     
@@ -280,13 +286,14 @@ class Dispatcher:
             response = {
                 "method": "turn_event_flow",
                 "status": "success",
-                "message": "Has caido en un evento!",
+                "message": f"¡Has caido en un evento de nivel {playergame.event_manager.event_level}!",
                 # "thrown_dices": [4, 3],
                 # "days_advanced": 7,
+                "current_turn": current_player,
                 "event": {
                     "id": playergame.event_manager.event.ID,
                     "level": playergame.event_manager.event_level,
-                    "efficiency_choosen":  playergame.event_manager.chosen_efficiency.ID,
+                    "efficiency_chosen":  playergame.event_manager.chosen_efficiency.ID,
                     "pass_first_challenge": playergame.event_manager.has_passed_1st_challenge,
                     "risk_challenge_dices": playergame.event_manager.risk_challenge_dices,
                     "risk_points": playergame.event_manager.risk_points,
@@ -306,6 +313,8 @@ class Dispatcher:
                     "effiencies": self.player.get_efficiencies(),
                     #"has_player_got_broke": False
                 },
+                "show_event": True,
+                "is_ready_to_set_next_turn": True
             }
             
             await self.manager.send_personal_json(response, websocket)
