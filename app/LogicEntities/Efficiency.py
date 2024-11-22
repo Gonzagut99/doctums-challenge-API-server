@@ -38,8 +38,9 @@ class Efficiency:
     
     def get_enabled_projects(self, purchased_projects, current_month):
         projects = [project for project in purchased_projects if project.ID in self.modifiable_by_projects ]
-        return filter(lambda project: not project.is_finished(current_month), projects)
-    
+        # return filter(lambda project: not project.is_finished(current_month), projects) #TODO: Implement this in future versions
+        return projects
+        
     def get_enabled_resources(self, purchased_resources):
         resources = [resource for resource in purchased_resources if resource.ID in self.modifiable_by_resources]
         return resources

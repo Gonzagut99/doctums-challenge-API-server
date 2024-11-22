@@ -102,7 +102,8 @@ class PlayerGame():
                     self.player.buy_product(product_id, actual_month)
             if actions.get("projects"):
                 for project_id in actions.get("projects"):
-                    self.player.buy_project(project_id, actual_month, actual_month + 1)
+                    # self.player.buy_project(project_id, actual_month, actual_month + 1)
+                    self.player.buy_project(project_id, actual_month, actual_month)
             if actions.get("resources"):
                 for resource_id in actions.get("resources"):
                     self.player.hire_resource(resource_id, actual_month, actual_month)
@@ -264,7 +265,7 @@ class PlayerGame():
         #all projects not in finished projects
         for project in self.player.projects.values():
             if not project.is_finished(self.time_manager.current_month):
-                project.update_remaining_time(self.time_manager.current_month)
+                project.update_remaining_months(self.time_manager.current_month)
     
     def update_resources_time(self):
         for resource in self.player.resources.values():
