@@ -53,7 +53,7 @@ class Dispatcher:
             }, player_game.player_connection)
     
     async def notify_player_advanced_days(self, game_id: str, websocket: WebSocket, message: dict):
-        days = self.session.get_playergame(self.player).time_manager.current_day
+        days = self.session.get_playergame(self.player).current_dice_result
         await self.manager.send_personal_json({
             "method": "days_advanced",
             "status": "success",
