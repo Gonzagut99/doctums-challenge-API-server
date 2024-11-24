@@ -57,7 +57,7 @@ class Dispatcher:
         await self.manager.send_personal_json({
             "method": "days_advanced",
             "status": "success",
-            "message": f"Has avanzado {days} días!",
+            "message": f"Haz avanzado {days} días!",
             "has_player_rolled_dices": True
         }, websocket)
         await self.notify_players_positions()
@@ -305,7 +305,7 @@ class Dispatcher:
             response = {
                 "method": "turn_event_flow",
                 "status": "success",
-                "message": f"¡Has caido en un evento de nivel {playergame.event_manager.event_level}!",
+                "message": f"¡Haz caido en un evento de nivel {playergame.event_manager.event_level}!",
                 # "thrown_dices": [4, 3],
                 # "days_advanced": 7,
                 "current_turn": current_player,
