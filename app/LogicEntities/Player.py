@@ -21,6 +21,8 @@ class Player:
         self.budget = initial_budget
         self.score = 0
         self.salaries_to_pay = 0
+        self.advanced_days = 0
+        self.advanced_months = 0
         self.is_host = False
         self.avatar_id = avatar_id
         self.recently_bought_modifiers = dict()

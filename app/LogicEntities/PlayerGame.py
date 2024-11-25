@@ -46,6 +46,22 @@ class PlayerGame():
         if self.is_journey_finished() or self.is_game_over():
             return False
         return True
+    
+    def get_player_stats(self):
+        player = self.player
+        current_month = self.time_manager.current_month if self.time_manager.current_month != 0 else 1
+        current_day = self.time_manager.current_day_in_month if self.time_manager.current_day_in_month != 0 else 1 
+        formated_month = f"{current_day:02d}/{current_month:02d}"
+        return  {
+                "playerId": player.id,
+                "avatarId": player.avatar_id,
+                "name": player.name,
+                "total": player.turn["total"],
+                "budget": player.budget,
+                "score": player.score,
+                "date": formated_month 
+
+            }
         
     # def begin_first_turn(self):
     #     self.turn_state = "playing"
@@ -323,7 +339,7 @@ class TimeManager:
     
     @property
     def current_day_in_month(self):
-        return (self.current_day % 30) + 1 #originally wasn't +1
+        return (self.current_day % 30) #originally wasn't +1
     
     @property
     def current_trimester(self):

@@ -100,6 +100,30 @@ class TurnManager:
         players_who_rolled_dices = [player.turn for player in self.connected_players if player.turn["has_player_rolled_dices"]]
         return sorted(players_who_rolled_dices, key=lambda x: x["total"], reverse=True)
     
+    def get_players_order_stats(self, players_games: list[PlayerGame]):
+        players_order = []
+        
+        for player_game in players_games :
+            player = player_game.player
+            current_month = player_game.time_manager.current_month if player_game.time_manager.current_month != 0 else 1
+            current_day = player_game.time_manager.current_day_in_month if player_game.time_manager.current_day_in_month != 0 else 1 
+            formated_month = f"{current_day:02d}/{current_month:02d}"
+            
+            player_order = {
+                "playerId": player.id,
+                "avatarId": player.avatar_id,
+                "name": player.name,
+                "total": player.turn["total"],
+                "budget": player.budget,
+                "score": player.score,
+                "date": formated_month 
+
+            }
+            players_order.append(player_order)
+        
+        
+        return sorted(players_order, key=lambda x: x["total"], reverse=True)
+        
     def player_rolled_dices(self, player_id: str):
         for player in self.connected_players:
             if player.id == player_id:

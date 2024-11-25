@@ -361,18 +361,23 @@ class Dispatcher:
         
         players_games = self.session.playersgames
         self.session.turn_manager.advance_turn()
+        turn_order = self.session.turn_manager.get_players_order_stats(players_games)
+        
         if self.session.turn_manager.last_turn is not self.session.turn_manager.current_turn_index:
             current_player = self.session.turn_manager.get_current_player()
             for player_game in players_games:
+                player_stats = self.session.get_playergame(player_game.player).get_player_stats()
                 response = {
                     "method": "next_turn",
                     "status": "success",
                     "message": "¡Un nuevo turno ha comenzado!",
                     "current_turn": current_player,
-                    "player": {
-                        "is_first_turn": player_game.time_manager.first_turn_in_month,
-                        "current_month": player_game.time_manager.current_month,
-                    }
+                    "player": player_stats,
+                    # "player": {
+                    #     "is_first_turn": player_game.time_manager.first_turn_in_month,
+                    #     "current_month": player_game.time_manager.current_month,
+                    # },
+                    "turn_order": turn_order
                     
                 }
                 await self.manager.send_personal_json(response, player_game.player_connection)
