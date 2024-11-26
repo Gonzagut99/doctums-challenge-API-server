@@ -16,6 +16,7 @@ class ConnectionManager:
 
     async def remove_connections(self,):
         for connection in self.connections:
+            print("Disconneting all connections")
             await connection.close()
             self.connections.remove(connection)
 

@@ -49,6 +49,7 @@ class Dispatcher:
                 "method": "notification",
                 "status": "success",
                 "message": message,
+                "current_turn": exclude_player.id,
                 actual_stage: True
             }, player_game.player_connection)
     
@@ -283,7 +284,7 @@ class Dispatcher:
                 "resources": playergame.get_resources_state(),
             },
             "show_modal": True,
-            "is_ready_to_face_event": True
+            "is_ready_to_face_event_after_submit": True
         }
         await self.manager.send_personal_json(response, websocket)        
     
