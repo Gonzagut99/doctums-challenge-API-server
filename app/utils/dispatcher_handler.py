@@ -148,7 +148,8 @@ class Dispatcher:
                     
                 },
                 "turns_order": [],
-                "is_start_game_stage": True
+                "is_start_game_stage": True,
+                "show_legacy_modal": True
                 
             }
             await self.manager.send_personal_json(response, player_game.player_connection)
