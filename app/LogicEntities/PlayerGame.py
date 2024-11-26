@@ -331,7 +331,7 @@ class TimeManager:
     
     @property
     def current_month(self):
-        return (self.current_day // 30) + 1
+        return (self.current_day // 31) + 1
     
     @property
     def current_day_of_week(self):
