@@ -52,7 +52,7 @@ async def websocket_endpoint(websocket: WebSocket, game_id: str):
             await dispatcher.dispatch(game_id, websocket, data)
             
     except WebSocketDisconnect:
-        game_session_logic.manager.remove_connections()
+        await game_session_logic.manager.remove_connections()
         
     
     

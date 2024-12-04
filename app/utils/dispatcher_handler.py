@@ -41,6 +41,7 @@ class Dispatcher:
     
     async def notify_all_players(self, message: str, exclude_player: Player = None, actual_stage: str = None):
         players_games = self.session.playersgames
+        turn_order = self.session.turn_manager.get_players_order_stats(players_games)
         for player_game in players_games:
             if exclude_player and player_game.player == exclude_player:
                 continue
@@ -50,18 +51,25 @@ class Dispatcher:
                 "status": "success",
                 "message": message,
                 "current_turn": exclude_player.id,
+                "turn_order": turn_order,
                 actual_stage: True
             }, player_game.player_connection)
     
     async def notify_player_advanced_days(self, game_id: str, websocket: WebSocket, message: dict):
         days = self.session.get_playergame(self.player).current_dice_result
+        player_stats = self.session.get_playergame(self.player).get_player_stats()
+        players_games = self.session.playersgames
+        turn_order = self.session.turn_manager.get_players_order_stats(players_games)
         await self.manager.send_personal_json({
             "method": "days_advanced",
             "status": "success",
             "message": f"Haz avanzado {days} días!",
+            "player": player_stats,
+            "turn_order": turn_order,
             "has_player_rolled_dices": True
         }, websocket)
         await self.notify_players_positions()
+        await self.notify_all_players(f"¡{self.player.name} ha avanzado {days} días!", exclude_player=self.player, actual_stage="is_new_turn_stage")
     
     async def notify_players_positions(self):
         players_games = self.session.playersgames
@@ -76,7 +84,7 @@ class Dispatcher:
             response = {
                 "method": "updated_players_positions",
                 "status": "success",
-                "messgae": f"{self.player.name} ha avanzado {days}",
+                "message": f"{self.player.name} ha avanzado {days} dias",
                 "players_position": players_position
             }
             await self.manager.send_personal_json(response, player_game.player_connection)
@@ -286,7 +294,8 @@ class Dispatcher:
             "show_modal": True,
             "is_ready_to_face_event_after_submit": True
         }
-        await self.manager.send_personal_json(response, websocket)        
+        await self.manager.send_personal_json(response, websocket)    
+        await self.notify_all_players(f"¡{self.player.name} ha planificado su plan de accion!", exclude_player=self.player, actual_stage="is_new_turn_stage")    
     
     # 3rd step
     async def handle_turn_event_flow(self, game_id: str, websocket: WebSocket, message: dict):
@@ -339,6 +348,8 @@ class Dispatcher:
             }
             
             await self.manager.send_personal_json(response, websocket)
+            has_won_event = playergame.event_manager.has_passed_1st_challenge or playergame.event_manager.has_passed_2nd_challenge
+            await self.notify_all_players(f"¡{self.player.name} ha caido en un evento!", exclude_player=self.player, actual_stage="is_new_turn_stage") 
         else:
             response = {
                 "method": "turn_event_manager",

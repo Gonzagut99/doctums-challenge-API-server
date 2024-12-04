@@ -51,6 +51,7 @@ class PlayerGame():
         player = self.player
         current_month = self.time_manager.current_month if self.time_manager.current_month != 0 else 1
         current_day = self.time_manager.current_day_in_month if self.time_manager.current_day_in_month != 0 else 1 
+        print()
         formated_month = f"{current_day:02d}/{current_month:02d}"
         return  {
                 "playerId": player.id,
@@ -331,7 +332,7 @@ class TimeManager:
     
     @property
     def current_month(self):
-        return (self.current_day // 31) + 1
+        return ((self.current_day - 1) // 30) + 1
     
     @property
     def current_day_of_week(self):
@@ -394,10 +395,10 @@ class TimeManager:
         return self.current_month >= self.max_running_projects
     
     def get_project_remaining_time(self, project:Project):
-        return project.start_datum + project.project_length - self.current_month
+        return 0 if ((project.start_datum + project.project_length) - self.current_month) <= 0 else project.start_datum + project.project_length - self.current_month
     
-    def get_resource_remaining_time(self, resource:Resource):
-        return resource.start_datum + resource.resource_lenght - self.current_month
+    def get_resource_remaining_time(self, resource: Resource):
+        return 0 if ((resource.start_datum + resource.resource_lenght) - self.current_month) <= 0 else resource.start_datum + resource.resource_lenght - self.current_month
     
     def notify_current_day_in_month(self):
         return print(f"Estas en el {self.current_day_in_month} / {self.current_month}")

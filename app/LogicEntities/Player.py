@@ -251,7 +251,7 @@ class Player:
             for product_id in project.delivered_products:
                 self._add_product(product_id, actual_month)
 
-    def get_products_from_resources(self, finished_resources: List[Resource], actual_month: int):        
+    def get_products_from_resources(self, finished_resources: List[Resource], actual_month: int):
         for resource in finished_resources:
             for product_id in resource.developed_products:
                 self._add_product(product_id, actual_month)

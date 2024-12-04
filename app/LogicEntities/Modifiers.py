@@ -26,10 +26,10 @@ class Project(Modifier):
     remaining_months: int = project_length
     
     def update_remaining_months(self, current_month):
-        self.remaining_months = self.project_length - (current_month - self.start_datum)
+        self.remaining_months = ((self.start_datum + self.project_length) - current_month)
 
     def is_finished(self, current_month):
-        if current_month - self.project_length > self.start_datum and current_month >= self.start_datum:
+        if ((self.start_datum + self.project_length) - current_month) <= 0:
             self.remaining_months = 0
             return True
         return False
@@ -46,10 +46,10 @@ class Resource(Modifier):
     remaining_time: int = resource_lenght
     
     def update_remaining_time(self, current_month):
-        self.remaining_time = self.resource_lenght - (current_month - self.start_datum)
+        self.remaining_time = (self.start_datum + self.resource_lenght) - current_month
     
     def is_finished(self, current_month):
-        if current_month - self.resource_lenght > self.start_datum and current_month >= self.start_datum:
+        if (self.start_datum + self.resource_lenght) - current_month <= 0:
             self.remaining_time = 0
             return True
         return False
