@@ -109,6 +109,12 @@ El archivo `dispatcher_handler.py` es fundamental para la interacción en tiempo
   ![Enviar plan de acción](app/public/SubmitPlan.png)
   ![Enfrentar evento](app/public/HandleEvent.png)
 
+## Tecnologías utilizadas
+- **FastAPI**
+- **SQLModel**
+- **Numpy**
+- **Webosckets**
+
 ## Integrantes del Equipo
 
 - **Gonzalo Gutiérrez Castillo** - Full-stack Developer - Product Owner
