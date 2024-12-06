@@ -1,46 +1,46 @@
 1;Problemas de negocio que se pretende resolver;2000;;;;
-2;Alcance de la soluci髇 tecnol骻ica;1000;1;;;
-3;Definici髇 de expectativas de apego baseline;500;1;2;;
-4;An醠isis de interfases con otras aplicaciones;500;2;3;;
+2;Alcance de la soluci贸n tecnol贸gica;1000;1;;;
+3;Definici贸n de expectativas de apego baseline;500;1;2;;
+4;An谩lisis de interfases con otras aplicaciones;500;2;3;;
 5;Presupuesto aprobado;500;2;3;4;
-6;Dise駉 de los Indicadores de resultados;500;1;2;;
-7;Elecci髇 de patrocinadores;1000;1;2;6;
-8;Elaboraci髇 del sistema de Gobernanza del proyecto;1000;1;;;
+6;Dise帽o de los Indicadores de resultados;500;1;2;;
+7;Elecci贸n de patrocinadores;1000;1;2;6;
+8;Elaboraci贸n del sistema de Gobernanza del proyecto;1000;1;;;
 9;Estudio de Cultura organizacional;1000;8;;;
-10;An醠isis de capacidades de proveedores;500;3;6;;
-11;Selecci髇 del Personal interno;1500;8;9;;
-12;Levantamiento de la Matriz de riesgos peri骴ica;1500;3;8;9;11
-13;Asignaci髇 del Project Manager;1000;8;11;;
-14;Elaboraci髇 de la Carta Gantt;1000;10;13;;
-15;Asignaci髇 del personal interno funcional;500;2;11;14;
-16;Asignaci髇 del personal interno de TI;500;2;11;14;
+10;An谩lisis de capacidades de proveedores;500;3;6;;
+11;Selecci贸n del Personal interno;1500;8;9;;
+12;Levantamiento de la Matriz de riesgos peri锟絛ica;1500;3;8;9;11
+13;Asignaci贸n del Project Manager;1000;8;11;;
+14;Elaboraci贸n de la Carta Gantt;1000;10;13;;
+15;Asignaci贸n del personal interno funcional;500;2;11;14;
+16;Asignaci贸n del personal interno de TI;500;2;11;14;
 17;Aseguramiento de la continuidad operacional;1000;14;11;8;
-18;Determinaci髇 de Roles y responsabilidades;1000;14;8;15;16
-19;Definici髇 de los Sistemas de trabajo;500;8;14;13;9
-20;Dise駉 de los Indicadores de gesti髇;500;14;12;5;
-21;Aprobaci髇 de Sistemas de incentivos;500;8;9;15;16
-22;Definici髇 de pol韙icas de seguridad laboral;500;8;9;15;16
-23;Realizaci髇 del kick off;500;8;14;18;19
-24;Plan de Comunicaci髇 inicial;500;9;23;;
-25;Integraci髇 del Equipo ampliado;500;10;15;16;13
-26;Determinaci髇 de Planes de mitigaci髇 peri骴icos;1000;12;14;;
-27;Talleres para determinar Gaps de configuraci髇;2000;2;3;14;
-28;Validaci髇 de las funcionalidades off baseline;1000;26;8;;
-29;Configuraci髇 del sistema;1000;2;28;;
-30;Dise駉 de los Sistemas de reportes;500;8;14;20;
-31;Dise駉 de la Capacitaci髇 t閏nica;500;10;15;14;
-32;Dise駉 de la Capacitaci髇 funcional;500;10;16;14;
+18;Determinaci贸n de Roles y responsabilidades;1000;14;8;15;16
+19;Definici贸n de los Sistemas de trabajo;500;8;14;13;9
+20;Dise帽o de los Indicadores de gestion;500;14;12;5;
+21;Aprobaci贸n de Sistemas de incentivos;500;8;9;15;16
+22;Definici贸n de pol铆ticas de seguridad laboral;500;8;9;15;16
+23;Realizaci贸n del kick off;500;8;14;18;19
+24;Plan de Comunicaci贸n inicial;500;9;23;;
+25;Integraci贸n del Equipo ampliado;500;10;15;16;13
+26;Determinaci贸n de Planes de mitigaci贸n peri锟絛icos;1000;12;14;;
+27;Talleres para determinar Gaps de configuraci贸n;2000;2;3;14;
+28;Validaci贸n de las funcionalidades off baseline;1000;26;8;;
+29;Configuraci贸n del sistema;1000;2;28;;
+30;Dise帽o de los Sistemas de reportes;500;8;14;20;
+31;Dise帽o de la Capacitaci贸n t茅cnica;500;10;15;14;
+32;Dise帽o de la Capacitaci贸n funcional;500;10;16;14;
 33;Talleres de Coaching para resolver conflictos;500;26;9;10;
-34;An醠isis de alineaci髇 organizacional;500;27;9;;
-35;Requerimientos de informaci髇 para migraci髇;500;2;;;
-36;Recopilaci髇 de Informaci髇 hist髍ica consistente;500;35;;;
-37;Elaboraci髇 de las interfases con aplicaciones;1000;2;4;14;
-38;Migraci髇 de datos al sistema;500;35;14;;
-39;Realizaci髇 de pruebas unitarias;500;14;29;35;
-40;Realizaci髇 de pruebas integrales;1000;39;;;
-41;Estrategia de capacitaci髇 a usuarios finales;500;39;31;;
-42;Capacitaci髇 a usuarios finales;2000;41;;;
-43;Realizaci髇 del Go Live;500;14;;;
-44;Aseguramiento de la operaci髇 con nuevo software;500;43;;;
-45;Modificaci髇 de las estructuras de organizaci髇;500;43;;;
-46;Elaboraci髇 de lecciones aprendidas;500;43;44;;
+34;An谩lisis de alineaci贸n organizacional;500;27;9;;
+35;Requerimientos de informaci贸n para migraci贸n;500;2;;;
+36;Recopilaci贸n de Informaci贸n hist贸rica consistente;500;35;;;
+37;Elaboraci贸n de las interfases con aplicaciones;1000;2;4;14;
+38;Migraci贸n de datos al sistema;500;35;14;;
+39;Realizaci贸n de pruebas unitarias;500;14;29;35;
+40;Realizaci贸n de pruebas integrales;1000;39;;;
+41;Estrategia de capacitaci贸n a usuarios finales;500;39;31;;
+42;Capacitaci贸n a usuarios finales;2000;41;;;
+43;Realizaci贸n del Go Live;500;14;;;
+44;Aseguramiento de la operaci贸n con nuevo software;500;43;;;
+45;Modificaci贸n de las estructuras de organizaci贸n;500;43;;;
+46;Elaboraci贸n de lecciones aprendidas;500;43;44;;
