@@ -23,6 +23,7 @@
 ## Descripción
 
 El presente proyecto es la lógica de un videojuego de mesa con temática educacional para fomentar el entrenamiento en la toma de buenas decisiones empresariales. Este proyecto es nuestra participación en una competencia propuesta por la empresa Doctums y Certus.
+
 ![Juego en marcha](app/public/GameInAction.png)
 
 ### Protocolos de Comunicación 
