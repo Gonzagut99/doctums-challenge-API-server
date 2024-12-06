@@ -22,10 +22,10 @@
 
 ## Descripción
 
-El presente proyecto es la logica de un videojuego de mesa con temática educacional para fomentar el entrenamiento en la toma de buenas decisiones empresariales. Este proyecto es nuestra participación en una competencia propuesta por la empresa Doctums Certus.
+El presente proyecto es la lógica de un videojuego de mesa con temática educacional para fomentar el entrenamiento en la toma de buenas decisiones empresariales. Este proyecto es nuestra participación en una competencia propuesta por la empresa Doctums y Certus.
 ![Juego en marcha](app/public/GameInAction.png)
 
-## Comunicación 
+### Protocolos de Comunicación 
 La documentación de la API Rest se puede encontrar al ingresar al endpoint principal del proyecto.
 
 ## Instrucciones para la instalación y ejecución
@@ -56,7 +56,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 Asegúrese de que `uvicorn` esté instalado y configurado correctamente en su entorno.
 
 ## Dinámica de la lógica
-La documentación de swagger contiene información de la conexión HTTP y la conexión de los Websockets, a continuación, explicamos la lógica que nosotros hemos ideado y creado de forma original con respecto al manejo y tráfico de información entre los websockets.
+La documentación de swagger contiene información de la conexión HTTP y la conexión de los Websockets. A continuación, explicamos la lógica que nosotros hemos ideado y creado de forma original con respecto al manejo y tráfico de información entre los websockets.
 
 ## dispatcher_handler.py
 
