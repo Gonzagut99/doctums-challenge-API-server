@@ -4,6 +4,7 @@ from fastapi import  FastAPI, Request, status
 from fastapi.concurrency import asynccontextmanager
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError, ResponseValidationError, ValidationException
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
     yield
     print("Shutting down app...")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
 
 app.title = "Challenge Doctums API"
 app.version = "0.0.1"
@@ -107,11 +108,78 @@ app.include_router(ws_router)
 app.include_router(game_http_router)
 app.include_router(player_http_router)
 
+# Montar directorio static
+app.mount("/public", StaticFiles(directory="app/public"), name="public")
 
-@app.get('/', tags = ['home'])
-def message ():
-    return HTMLResponse('<h2>Hello world</h2>')
 
+# @app.get('/', tags = ['home'])
+# def message ():
+#     return HTMLResponse('<h2>Bienvenido al Challenge Doctums</h2>')}
+@app.get('/', response_class=HTMLResponse, tags=['home'])
+def home():
+        html_content = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Challenge Doctums</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    background-color: #f0f0f0;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    margin-top: 50px;
+                }
+                h2 {
+                    color: #333;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    text-align: center;
+                    text-decoration: none;
+                    outline: none;
+                    color: #fff;
+                    background-color: #4CAF50;
+                    border: none;
+                    border-radius: 15px;
+                    box-shadow: 0 9px #999;
+                }
+                .button:hover {background-color: #3e8e41}
+                .button:active {
+                    background-color: #3e8e41;
+                    box-shadow: 0 5px #666;
+                    transform: translateY(4px);
+                }
+                img {
+                    border-radius: 36px;
+                    max-width: 500px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    transition: transform 0.2s;
+                }
+                img:hover {
+                    transform: scale(1.1);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Bienvenido al Challenge Doctums</h2>
+                <img src="/public/GameInAction.png" alt="Game in action" style="margin-bottom: 20px;">
+                <a href="/docs" class="button">Ver Documentación</a>
+            </div>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+    
 
 # create_db_and_tables()
 print("Server started")

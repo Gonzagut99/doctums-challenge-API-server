@@ -29,7 +29,7 @@ ws_router = APIRouter(prefix="/ws")
 #         await websocket.close()  # Close the WebSocket since this endpoint is only for setup
 
 
-@ws_router.websocket("/game/connect/{game_id}")
+@ws_router.websocket("/game/connect/{game_id}" )
 async def websocket_endpoint(websocket: WebSocket, game_id: str):
     if not game_id :
         await websocket.close()
