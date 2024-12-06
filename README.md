@@ -119,7 +119,7 @@ El archivo `dispatcher_handler.py` es fundamental para la interacción en tiempo
 
 ## Agradecimientos
 
-(Agradezca aquí a las personas, organizaciones o recursos que contribuyeron al desarrollo del proyecto.)
+Agradecemos a Doctums, a Certus por la oportunidad de participar en esta competencia y a todos los miembros del equipo por su dedicación y esfuerzo en el desarrollo de este proyecto.
 
 ## Licencia
 
