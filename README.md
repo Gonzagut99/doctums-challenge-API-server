@@ -31,6 +31,8 @@ La documentación de la API Rest se puede encontrar al ingresar al endpoint prin
 
 ## Instrucciones para la instalación y ejecución
 
+Version de Python 3.12
+
 ### 1. Activacion del entorno de python venv
 En windows
 ```bash
