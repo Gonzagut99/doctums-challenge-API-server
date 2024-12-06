@@ -69,7 +69,7 @@ El archivo `dispatcher_handler.py` contiene la lógica para despachar datos a tr
 - **Comunicación Eficiente**: Utiliza websockets para asegurar una transmisión de datos rápida y eficiente, mejorando la experiencia del usuario en el juego.
 
 ### Ejemplo de Uso
-A continuación se muestra un ejemplo de cómo se construye una respuesta y se envía a un jugador específico:
+A continuación, se muestra un ejemplo de cómo se construye una respuesta y se envía a un jugador específico:
 
 ```python
 response = {
