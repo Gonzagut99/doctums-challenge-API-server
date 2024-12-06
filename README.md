@@ -26,6 +26,7 @@ El presente proyecto es la logica de un videojuego de mesa con temática educaci
 ![Juego en marcha](app/public/GameInAction.png)
 
 ## Comunicación 
+La documentación de la API Rest se puede encontrar al ingresar al endpoint principal del proyecto.
 
 ## Instrucciones para la instalación y ejecución
 
