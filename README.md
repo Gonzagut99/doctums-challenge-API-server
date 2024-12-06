@@ -56,7 +56,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 Asegúrese de que `uvicorn` esté instalado y configurado correctamente en su entorno.
 
 ## Dinámica de la lógica
-La documentación de swagger contiene información de la conexión HTTP y la conexión de los Websockets, a continuación explicamos la lógica que nosotros hemos ideado y creado de forma original con respecto al manejo y tráfico de informacion entre los websockets.
+La documentación de swagger contiene información de la conexión HTTP y la conexión de los Websockets, a continuación, explicamos la lógica que nosotros hemos ideado y creado de forma original con respecto al manejo y tráfico de información entre los websockets.
 
 ## dispatcher_handler.py
 
