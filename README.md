@@ -27,7 +27,7 @@ El presente proyecto es la lógica de un videojuego de mesa con temática educac
 ![Juego en marcha](app/public/GameInAction.png)
 
 ### Protocolos de Comunicación 
-La documentación de la API Rest se puede encontrar al ingresar al endpoint principal del proyecto.
+La documentación de la API Rest se puede encontrar al ingresar al endpoint principal (/) del proyecto.
 
 ## Instrucciones para la instalación y ejecución
 
