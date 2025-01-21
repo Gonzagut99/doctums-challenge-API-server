@@ -25,11 +25,11 @@ jobs:
           id: build-docker-image
           run: |
             ls -la 
-            docker build . -f Dockerfile -t esclender/doctums-front:latest
+            docker build . -f Dockerfile -t esclender/doctums-back:latest
 
         - name: tag image before push to ECR
           id: tag-docker-image
-          run: docker tag esclender/doctums-front:latest 494746235894.dkr.ecr.us-east-1.amazonaws.com/esclender/doctums:latest
+          run: docker tag esclender/doctums-back:latest 494746235894.dkr.ecr.us-east-1.amazonaws.com/esclender/doctums:latest
         
         - name: push the docker image
           id: push-docker-image
