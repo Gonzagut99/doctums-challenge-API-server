@@ -9,18 +9,28 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v2
-        
-        - name: Log in to Docker Hub
-          uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
           with:
-            username: esclender # Replace when permissions to secrets is given lol
-            password: Enero20.* # Replace when permissions to secrets is given lol
+            aws-access-key-id: AKIAXGMJMOP3HQ4SBH4V  #AKIAXGMJMOP3HCZOFNWN
+            aws-secret-access-key: 3CSdmyv2kU8AvQqrrm2mhWv5waeHUx21i1uVmLTL   #p5OwWrNxjo5SdGt9AmiPNRBWGu+uZVNJ3uEfK4Od
+            aws-region: us-east-1
+
+        - name: login to aws ecr
+          id: login-aws
+          run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 494746235894.dkr.ecr.us-east-1.amazonaws.com
 
         - name: build the docker image
           id: build-docker-image
           run: |
             ls -la 
-            docker build . -f Dockerfile -t esclender/doctums-back:latest 
+            docker build . -f Dockerfile -t esclender/doctums-front:latest
+
+        - name: tag image before push to ECR
+          id: tag-docker-image
+          run: docker tag esclender/doctums-front:latest 494746235894.dkr.ecr.us-east-1.amazonaws.com/esclender/doctums:latest
+        
         - name: push the docker image
           id: push-docker-image
-          run: docker push esclender/doctums-back:latest
+          run: docker push 494746235894.dkr.ecr.us-east-1.amazonaws.com/esclender/doctums:latest
